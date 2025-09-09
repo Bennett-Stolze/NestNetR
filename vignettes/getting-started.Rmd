@@ -1,0 +1,85 @@
+---
+title: "Package Vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{getting-started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+devtools::document()
+devtools::load_all()
+```
+# Getting started {#start}
+
+To classify breeding behaviour from light-level geolocator data in R we need a couple of R packages as well as functions that allow to run our code. We created a package called _GeoLocTools_ that contains functions that are not necessarily associated to a certain package but are used in this manual. Importantly the package can also run a check on you system (function: _setupGeolocation()_), detecting packages that are already on your computer and installs the missing tools directly from CRAN or GitHub.
+
+The package requires _devtools_ (install if necessary using the _install.packages()_ function). With _devtools_ on your system, you are able to download and built as well as install R packages directly from GitHub (e.g. _GeoLocTools_).
+
+```{r eval = FALSE}
+library(devtools)
+install_github("SLisovski/GeoLocTools")
+```
+
+You should now be able to load the package and run the `setupGeolocation()` function. We recommend to include this line at the beginning of each script you create for a geolocator analysis. Also check (every now and then), if there is a new version of _GeoLocTools_ available. And if that is the case, re-install the package using the same code you used for initial installation.
+
+```{r, message=FALSE, warning=FALSE}
+library(GeoLocTools)
+setupGeolocation()
+``` 
+
+if you see "You are all set!" in your console, the function ran successfully and you are able to proceed.
+
+Among dependencies, the following geolocator specific packages are loaded by this function:
+
+- twGeos
+- GeoLight
+- probGLS
+- SGAT
+- FLightR
+
+
+# 1 - Loading data {#loadingData}
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+library(GeoLocTools)
+devtools::document()
+devtools::load_all()
+setupGeolocation()
+```
+
+The first step is to load your raw data into R. Different geolocator types (e.g. from different manufacturers or different series) provide raw data in different formats. And while there are functions available to read a whole range of formats, you may have to either write your own function, use simple read text utilities or get in touch with the package managers to write code that fits your format if it is not yet implemented.
+
+The most frequently used geolocators provide files with the extension `.lux` (Migrate Technology Ltd), `.lig` (BAS, Biotrack) or `.glf` (Swiss Ornithological Institute). The functions `readMTlux`, `ligTrans` and `glfTrans` allows you to read these files. The documentations of the different packages may help to provide information on how to read other files (e.g. ?GeoLight). In most cases the raw data is stored in a text file that can also be read in to R using the base function `read.table()`.
+
+With the suggested data structure, we can then define metadata information on the individual, the species, the deployment location, and define the sub-folder for saving and extracting data files.
+
+```{r}
+ID <- "BB959"
+Species <- "AreInt"
+wd <- "data"
+```
+
+By using the above metadata we can use the `paste0` command to include this information in reading and writing of files.
+
+```{r}
+raw_light <- read_lux(paste0(wd,"RawData/", Species, "/", ID, ".lux"))
+raw_deg <- read_deg(paste0(wd,"RawData/", Species, "/", ID, ".deg"))
+```
+
+## 1.1 - Data structure
+For classifying the breeding behaviour, we need the data in a specific format. The data frame needs to contain at least four columns with the following names:
+
+1. Date
+2. Light
+3. Tmin
+4. Tmax
+
+and these columns need to be in a specific format with Date being a `POSIXc` class and Light, Tmin & Tmax being `numeric` integers. Check if the structure of your data follows the required format with the function `str`. If not adjust Date format with `as.POSIXct(raw_data$Date, tz = "GMT")`.
+```{r}
+str(raw_light)
+```
