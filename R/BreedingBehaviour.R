@@ -32,7 +32,7 @@ read_lux <- function(lux_file, tz = "UTC", small = 1e-4) {
     stop("File not found: ", lux_file, call. = FALSE)
   }
   
-  raw_lines <- utils::readLines(lux_file, warn = FALSE)
+  raw_lines <- base::readLines(lux_file, warn = FALSE)
   line_index <- grep("^DD/MM/YYYY", raw_lines)
   if (length(line_index) == 0) {
     stop("Could not find header marker 'DD/MM/YYYY' in file: ", lux_file, call. = FALSE)
@@ -87,7 +87,7 @@ read_deg <- function(deg_file, tz = "UTC") {
     stop("File not found: ", deg_file, call. = FALSE)
   }
   
-  raw_lines  <- utils::readLines(deg_file, warn = FALSE)
+  raw_lines  <- base::readLines(deg_file, warn = FALSE)
   line_index <- grep("^DD/MM/YYYY", raw_lines)
   if (length(line_index) == 0) {
     stop("Could not find header marker 'DD/MM/YYYY' in file: ", deg_file, call. = FALSE)
