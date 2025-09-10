@@ -12,12 +12,14 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+devtools::document()
+devtools::load_all()
 ```
 # Getting started {#start}
 
 To classify breeding behaviour from light-level geolocator data in R we need a couple of R packages as well as functions that allow to run our code. We created a package called _GeoLocTools_ that contains functions that are not necessarily associated to a certain package but are used in this manual. Importantly the package can also run a check on you system (function: _setupGeolocation()_), detecting packages that are already on your computer and installs the missing tools directly from CRAN or GitHub.
 
-The package requires _devtools_ (install if necessary using the _install.packages()_ function). With _devtools_ on your system, you are able to download and built as well as install R packages directly from GitHub (e.g. _GeoLocTools_).
+The package requires _devtools_ (install if necessary using the _install.packages()_ function). With _devtools_ on your system, you are able to download and built as well as install R packages directly from GitHub (e.g. _BreedingBehaviour_).
 
 ```{r eval = FALSE}
 library(devtools)
@@ -65,8 +67,8 @@ wd <- "data"
 By using the above metadata we can use the `paste0` command to include this information in reading and writing of files.
 
 ```{r}
-raw_light <- read_lux(paste0(wd,"RawData/", Species, "/", ID, ".lux"))
-raw_deg <- read_deg(paste0(wd,"RawData/", Species, "/", ID, ".deg"))
+raw_light <- read_lux(paste0(wd,"/RawData/", Species, "/", ID, ".lux"))
+raw_deg <- read_deg(paste0(wd,"/RawData/", Species, "/", ID, ".deg"))
 ```
 
 ## 1.1 - Data structure
