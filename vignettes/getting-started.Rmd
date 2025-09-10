@@ -21,7 +21,7 @@ The package requires _devtools_ (install if necessary using the _install.package
 
 ```{r eval = FALSE}
 library(devtools)
-install_github("SLisovski/GeoLocTools")
+install_github("bennett-stolze/BreedingBehaviour")
 ```
 
 You should now be able to load the package and run the `setupGeolocation()` function. We recommend to include this line at the beginning of each script you create for a geolocator analysis. Also check (every now and then), if there is a new version of _GeoLocTools_ available. And if that is the case, re-install the package using the same code you used for initial installation.
