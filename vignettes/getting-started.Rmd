@@ -12,7 +12,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-devtools::document()
+knitr::opts_knit$set(root.dir = rprojroot::find_package_root_file())
+#devtools::document()
 devtools::load_all()
 ```
 # Getting started {#start}
@@ -26,11 +27,10 @@ library(devtools)
 install_github("bennett-stolze/BreedingBehaviour")
 ```
 
-You should now be able to load the package and run the `setupGeolocation()` function. We recommend to include this line at the beginning of each script you create for a geolocator analysis. Also check (every now and then), if there is a new version of _GeoLocTools_ available. And if that is the case, re-install the package using the same code you used for initial installation.
+You should now be able to load the package. We recommend to check (every now and then), if there is a new version of _BreedingBehaviour_ available. And if that is the case, re-install the package using the same code you used for initial installation.
 
 ```{r, message=FALSE, warning=FALSE}
-library(GeoLocTools)
-setupGeolocation()
+library(BreedingBehaviour)
 ``` 
 
 if you see "You are all set!" in your console, the function ran successfully and you are able to proceed.
@@ -45,13 +45,6 @@ Among dependencies, the following geolocator specific packages are loaded by thi
 
 
 # 1 - Loading data {#loadingData}
-```{r, echo = FALSE, message=FALSE, warning=FALSE}
-library(GeoLocTools)
-devtools::document()
-devtools::load_all()
-setupGeolocation()
-```
-
 The first step is to load your raw data into R. Different geolocator types (e.g. from different manufacturers or different series) provide raw data in different formats. And while there are functions available to read a whole range of formats, you may have to either write your own function, use simple read text utilities or get in touch with the package managers to write code that fits your format if it is not yet implemented.
 
 The most frequently used geolocators provide files with the extension `.lux` (Migrate Technology Ltd), `.lig` (BAS, Biotrack) or `.glf` (Swiss Ornithological Institute). The functions `readMTlux`, `ligTrans` and `glfTrans` allows you to read these files. The documentations of the different packages may help to provide information on how to read other files (e.g. ?GeoLight). In most cases the raw data is stored in a text file that can also be read in to R using the base function `read.table()`.
@@ -65,21 +58,30 @@ wd <- "data"
 ```
 
 By using the above metadata we can use the `paste0` command to include this information in reading and writing of files.
+The columns of our data need to be in a specific format with Date being a `POSIXc` class and Light, Tmin & Tmax being `numeric` integers. Check if the structure of your data follows the required format with the function `str`. If not adjust Date format with `as.POSIXct(raw_light$Date, tz = "GMT")`.
 
 ```{r}
 raw_light <- read_lux(paste0(wd,"/RawData/", Species, "/", ID, ".lux"))
-raw_deg <- read_deg(paste0(wd,"/RawData/", Species, "/", ID, ".deg"))
+head(raw_light)
+str(raw_light)
 ```
 
-## 1.1 - Data structure
-For classifying the breeding behaviour, we need the data in a specific format. The data frame needs to contain at least four columns with the following names:
+```{r}
+raw_deg <- read_deg(paste0(wd,"/RawData/", Species, "/", ID, ".deg"))
+head(raw_deg)
+str(raw_deg)
+```
+
+# 2 - Preprocessing
+To create consistent input for analysing the breeding behaviour, light and temperature recordings need to be combined into uniform time series. The final data frame thus needs to contain four columns with the following names:
 
 1. Date
 2. Light
 3. Tmin
 4. Tmax
 
-and these columns need to be in a specific format with Date being a `POSIXc` class and Light, Tmin & Tmax being `numeric` integers. Check if the structure of your data follows the required format with the function `str`. If not adjust Date format with `as.POSIXct(raw_data$Date, tz = "GMT")`.
-```{r}
-str(raw_light)
-```
+Light data provides the reference timeline with the coarsest resolution, while temperature data needs to be aligned to it. Missing temperature values are interpolated by filling values backward over their original sampling intervals so that they match the resolution of the light data. 
+
+All input variables are then normalised to a range of 0–1 to ensure comparability. To minimise the influence of extreme outliers, realistic value ranges are defined by calculating the 2.5th and 97.5th percentiles of each variable (`Light`, `Tmin`, `Tmax`) across all preprocessed data.
+
+
