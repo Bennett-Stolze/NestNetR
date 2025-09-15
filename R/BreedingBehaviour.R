@@ -104,12 +104,182 @@ read_deg <- function(deg_file, tz = "UTC") {
     d <- d[-seq_len(3), , drop = FALSE]
   }
   
-  d$Time         <- as.POSIXct(strptime(d$Time, "%d/%m/%Y %H:%M:%S", tz = tz), tz = tz)
+  d$Date         <- as.POSIXct(strptime(d$Time, "%d/%m/%Y %H:%M:%S", tz = tz), tz = tz)
   d$Tmin         <- suppressWarnings(as.numeric(d$Tmin))
   d$Tmax         <- suppressWarnings(as.numeric(d$Tmax))
-  d$Date         <- as.Date(d$Time)
   keep           <- !is.na(d$Date) & !is.na(d$Tmin) & !is.na(d$Tmax)
   out            <- d[keep, c("Date", "Tmin", "Tmax")]
   rownames(out)  <- NULL
   out
+}
+
+#' Determine breeding period (start & end dates) from data coverage
+#'
+#' Uses daily coverage of light (.lux), temperature (.deg) and twilight (.twl)
+#' to infer the breeding period as the longest continuous run of days with
+#' light/temperature present but no twilight events.
+#'
+#' In `auto = TRUE` mode, the function reads the twilight file from
+#' `file.path(wd, "RawData", Species, paste0(ID, "_twl.csv"))`.
+#'
+#' @param raw_light data.frame with POSIXct column `Date` (from \code{read_lux()}).
+#' @param raw_deg   data.frame with Date or POSIXct column `Date` (from \code{read_deg()}).
+#' @param ID        Character scalar; individual ID used to locate the twilight file.
+#' @param Species   Character scalar; species subfolder used to locate the twilight file.
+#' @param wd        Character scalar; project working directory root.
+#' @param auto      Logical; if \code{TRUE} (default) read the twilight file automatically
+#'                  and infer the breeding period. (Manual mode to be implemented.)
+#'
+#' @return Named \code{Date} vector: \code{c(start = <Date>, end = <Date>)}.
+#'   If no suitable gap is found, returns \code{c(start = NA, end = NA)} with a warning.
+#' @export
+set_breeding_period <- function(raw_light, raw_deg, ID, Species, wd, auto = TRUE) {
+  
+  if (!("Date" %in% names(raw_light))) stop("raw_light must have a 'Date' column.")
+  if (!("Date" %in% names(raw_deg)))   stop("raw_deg must have a 'Date' column.")
+  
+  if (isTRUE(auto)) {
+    # ---- read twilight file ---------------------------------------------------
+    twl_path <- file.path(wd, "RawData", Species, paste0(ID, "_twl.csv"))
+    if (!file.exists(twl_path)) {
+      stop("Twilight file not found: ", twl_path)
+    }
+    
+    twl <- utils::read.csv(twl_path, stringsAsFactors = FALSE)
+    
+    # basic columns check
+    if (!all(c("Twilight", "Rise", "Deleted") %in% names(twl))) {
+      stop("Twilight file must contain columns: 'Twilight', 'Rise', 'Deleted'.")
+    }
+    
+    # parse & clean
+    twl$Twilight      <- as.POSIXct(twl$Twilight, tz = "UTC", format = "%Y-%m-%d %H:%M:%S")
+    twl$Twilight_date <- as.Date(twl$Twilight, tz = "UTC")
+    twl$Twilight_time <- format(twl$Twilight, "%H:%M:%S")
+    twl                <- twl[!twl$Deleted, , drop = FALSE]
+    twl                <- twl[order(twl$Twilight), , drop = FALSE]
+    
+    # ensure first event is sunset
+    if (nrow(twl) > 0 && isTRUE(twl$Rise[1])) {
+      twl <- twl[-1, , drop = FALSE]
+      if (nrow(twl) == 0L) {
+        warning("No twilight events left after dropping initial sunrise.")
+        return(c(start = as.Date(NA), end = as.Date(NA)))
+      }
+    }
+    
+    # ---- infer breeding period from coverage ---------------------------------
+    light_day <- unique(as.Date(raw_light$Date))
+    deg_day   <- unique(as.Date(raw_deg$Date))
+    twl_day   <- unique(as.Date(twl$Twilight_date))
+    
+    if (length(light_day) == 0L && length(deg_day) == 0L) {
+      warning("No days available in .lux or .deg files.")
+      return(c(start = as.Date(NA), end = as.Date(NA)))
+    }
+    
+    rng_min  <- min(c(light_day, deg_day), na.rm = TRUE)
+    rng_max  <- max(c(light_day, deg_day), na.rm = TRUE)
+    all_days <- seq(rng_min, rng_max, by = "day")
+    
+    light_flag <- all_days %in% light_day
+    deg_flag   <- all_days %in% deg_day
+    twl_flag   <- all_days %in% twl_day
+    
+    # days with data but no TWL
+    twl_missing <- (light_flag | deg_flag) & !twl_flag
+    
+    if (!any(twl_missing)) {
+      warning("No gap without twilight events found within the data range.")
+      return(c(start = as.Date(NA), end = as.Date(NA)))
+    }
+    
+    r <- rle(twl_missing)
+    lens_true <- ifelse(r$values, r$lengths, 0L)
+    i <- which.max(lens_true)
+    end_row   <- sum(r$lengths[seq_len(i)])
+    start_row <- end_row - r$lengths[i] + 1L
+    
+    tm.breeding <- c(start = all_days[start_row], end = all_days[end_row])
+  
+  } else {
+    # Manual path (to be implemented later)
+    warning("Manual mode (auto = FALSE) not yet implemented; returning NA dates.")
+    return(c(start = as.Date(NA), end = as.Date(NA)))
+    
+    
+    tm.breeding <- ... # follows later
+  }
+  
+  # ---- Assemble raw data for the inferred breeding period --------------------
+  ## 1) Prepare 4-hourly temperature data with POSIXct Time
+  deg_sub <- raw_deg[
+    (if ("Time" %in% names(raw_deg)) raw_deg$Time else raw_deg$Date) >= start_buf_ct &
+      (if ("Time" %in% names(raw_deg)) raw_deg$Time else raw_deg$Date) <  end_buf_ct,
+    , drop = FALSE
+  ]
+  
+  if (!("Time" %in% names(deg_sub))) {
+    if (inherits(deg_sub$Date, "POSIXct")) {
+      deg_sub$Time <- deg_sub$Date
+    } else {
+      ## If Date only is present (shouldn’t be your case now), this would create noon times:
+      ## deg_sub$Time <- as.POSIXct(paste0(as.Date(deg_sub$Date), " 12:00:00"), tz="UTC")
+      stop("Temperature data must have 4-hourly POSIXct timestamps in a 'Time' column.")
+    }
+  }
+  if (!inherits(deg_sub$Time, "POSIXct")) {
+    deg_sub$Time <- as.POSIXct(deg_sub$Time, tz = "UTC")
+  }
+  
+  ## keep only the needed columns; drop rows with all-NA temps
+  keep_deg <- intersect(names(deg_sub), c("Time","Tmin","Tmax"))
+  deg_dat  <- deg_sub[, keep_deg, drop = FALSE]
+  if (all(c("Tmin","Tmax") %in% names(deg_dat))) {
+    bad <- is.na(deg_dat$Tmin) & is.na(deg_dat$Tmax)
+    if (any(bad)) deg_dat <- deg_dat[!bad, , drop = FALSE]
+  }
+  
+  ## sort both by time
+  deg_dat  <- deg_dat[order(deg_dat$Time), , drop = FALSE]
+  raw_light  <- raw_light[order(raw_light$Time), , drop = FALSE]
+  
+  ## 2) Rolling “last observation carried forward” match on time
+  lux_t_num <- as.numeric(raw_light$Time)
+  deg_t_num <- as.numeric(deg_dat$Time)
+  
+  ## for each lux time, find index of most recent deg time <= lux time
+  idx <- findInterval(lux_t_num, deg_t_num)  # 0 means none earlier
+  
+  ## optional: enforce a maximum allowed time gap (e.g. 6 hours) to avoid carrying too far
+  max_gap_sec <- 6 * 3600
+  gap <- ifelse(idx > 0, lux_t_num - deg_t_num[pmax(idx, 1L)], Inf)
+  idx[ gap > max_gap_sec ] <- 0L
+  
+  ## build output with temps from matched indices
+  raw_breeding <- data.frame(
+    Time  = raw_light$Time,
+    Light = raw_light$Light,
+    Tmin  = if ("Tmin" %in% names(deg_dat)) ifelse(idx > 0, deg_dat$Tmin[idx], NA_real_) else NA_real_,
+    Tmax  = if ("Tmax" %in% names(deg_dat)) ifelse(idx > 0, deg_dat$Tmax[idx], NA_real_) else NA_real_,
+    stringsAsFactors = FALSE
+  )
+  
+  ## optional: back-fill leading NAs (before first deg record within max_gap)
+  ffill <- function(x){ last <- NA; for(i in seq_along(x)) if(!is.na(x[i])) last <- x[i] else x[i] <- last; x }
+  bfill <- function(x){ nxt  <- NA; for(i in rev(seq_along(x))) if(!is.na(x[i])) nxt  <- x[i] else x[i] <- nxt;  x }
+  if ("Tmin" %in% names(raw_breeding)) raw_breeding$Tmin <- bfill(ffill(raw_breeding$Tmin))
+  if ("Tmax" %in% names(raw_breeding)) raw_breeding$Tmax <- bfill(ffill(raw_breeding$Tmax))
+  
+  ## 3) Final trim to [start, end+1 day) and drop rows without Light
+  start_cut <- as.POSIXct(tm.breeding[1],      tz = "UTC")
+  end_cut   <- as.POSIXct(tm.breeding[2] + 1L, tz = "UTC")  # exclusive
+  raw_breeding <- raw_breeding[
+    raw_breeding$Time >= start_cut &
+      raw_breeding$Time <  end_cut  &
+      !is.na(raw_breeding$Light),
+    , drop = FALSE
+  ]
+  
+  return(raw_breeding)
 }
