@@ -1,12 +1,15 @@
 Package: BreedingBehaviour
-Title: Automated analysis of breeding behaviour	of arctic breeding shorebirds using geolocator data
+Title: Automated Analysis of Breeding Behaviour of Arctic Shorebirds Using Geolocator Data
 Version: 0.0.0.9000
 Authors@R: 
-    person("Bennett Paul", "Stolze", , "bennettstolze@web.de", role = c("aut", "cre"))
-    person("Simeon", "Lisovski", , "Simeon.Lisovski@gmail.com", role = "aut")
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    c(
+      person("Bennett Paul", "Stolze", email = "bennettstolze@web.de", role = c("aut", "cre")),
+      person("Simeon", "Lisovski", email = "Simeon.Lisovski@gmail.com", role = "aut")
+    )
+Description: Provides functions for the preprocessing and analysis of geolocator 
+    and biologger data, including tools to combine light and temperature recordings, 
+    standardise input sequences, and classify breeding behaviour using deep learning models.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
