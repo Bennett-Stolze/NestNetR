@@ -33,8 +33,6 @@ You should now be able to load the package. We recommend to check (every now and
 library(BreedingBehaviour)
 ``` 
 
-if you see "You are all set!" in your console, the function ran successfully and you are able to proceed.
-
 Among dependencies, the following geolocator specific packages are loaded by this function:
 
 - twGeos
@@ -44,7 +42,8 @@ Among dependencies, the following geolocator specific packages are loaded by thi
 - FLightR
 
 
-# 1 - Loading data {#loadingData}
+# 1 - Loading data
+## 1.1 - Raw data
 The first step is to load your raw data into R. Different geolocator types (e.g. from different manufacturers or different series) provide raw data in different formats. And while there are functions available to read a whole range of formats, you may have to either write your own function, use simple read text utilities or get in touch with the package managers to write code that fits your format if it is not yet implemented.
 
 The most frequently used geolocators provide files with the extension `.lux` (Migrate Technology Ltd), `.lig` (BAS, Biotrack) or `.glf` (Swiss Ornithological Institute). The functions `readMTlux`, `ligTrans` and `glfTrans` allows you to read these files. The documentations of the different packages may help to provide information on how to read other files (e.g. ?GeoLight). In most cases the raw data is stored in a text file that can also be read in to R using the base function `read.table()`.
@@ -72,6 +71,16 @@ head(raw_deg)
 str(raw_deg)
 ```
 
+## 1.2 - Identify breeding period
+Since the raw data covers the entire migration route, the dataset must be trimmed to the breeding period before processing. This can be done either by automatically detecting the period using a corresponding twilight file (.twl) or by manually specifying the range.
+
+### 1.2.1 - Automatic detection
+If a twilight file is available, the breeding period can be automatically detected using the `auto = T` setting in the `set_breeding_period` function. Twilight files (`.csv`) can be created by functions associated with the _GeoLight_ or _TwGeos_ packages. The twilight file needs to be put into the Rawdata folder.
+```{r}
+breeding_data_raw <- set_breeding_period(raw_light, raw_deg, ID, Species, wd, auto = TRUE)
+```
+
+
 # 2 - Preprocessing
 To create consistent input for analysing the breeding behaviour, light and temperature recordings need to be combined into uniform time series. The final data frame thus needs to contain four columns with the following names:
 
@@ -84,4 +93,6 @@ Light data provides the reference timeline with the coarsest resolution, while t
 
 All input variables are then normalised to a range of 0–1 to ensure comparability. To minimise the influence of extreme outliers, realistic value ranges are defined by calculating the 2.5th and 97.5th percentiles of each variable (`Light`, `Tmin`, `Tmax`) across all preprocessed data.
 
+```{r}
 
+```
