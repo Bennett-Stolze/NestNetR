@@ -31,6 +31,7 @@ You should now be able to load the package. We recommend to check (every now and
 library(BreedingBehaviour)
 ``` 
 
+
 # 1 - Loading data
 ## 1.1 - Raw data
 The first step is to load your raw data into R. Different geolocator types (e.g. from different manufacturers or different series) provide raw data in different formats. And while there are functions available to read a whole range of formats, you may have to either write your own function, use simple read text utilities or get in touch with the package managers to write code that fits your format if it is not yet implemented.
@@ -65,12 +66,19 @@ Since the raw data covers the entire migration route, the dataset must be trimme
 
 ### 1.2.1 - Automatic detection
 If a twilight file is available, the breeding period can be automatically detected using the `auto = T` setting in the `set_breeding_period` function. Twilight files (`.csv`) can be created by functions associated with the _GeoLight_ or _TwGeos_ packages. The twilight file needs to be put into the Rawdata folder.
+
+*Automatic Approach*
 ```{r}
 tm.breeding <- set_breeding_period(raw_light, raw_deg, ID, Species, wd, auto = TRUE)
 tm.breeding
-
-tm.breeding <- set_breeding_period(raw_light, raw_deg, ID, Species, wd, auto = FALSE, gr.Device = "x11")
 ```
+
+*Manual Approach*
+```{r}
+tm.breeding <- set_breeding_period(raw_light, raw_deg, ID, Species, wd, auto = FALSE, gr.Device = "x11")
+tm.breeding
+```
+
 
 # 2 - Preprocessing
 To create consistent input for analysing the breeding behaviour, light and temperature recordings need to be combined into uniform time series. The final data frame thus needs to contain four columns with the following names:
@@ -87,4 +95,17 @@ All input variables are then normalised to a range of 0–1 to ensure comparabil
 ```{r}
 devtools::document()
 breeding_data <- preprocessing(raw_light, raw_deg, tm.breeding)
+```
+
+
+# 3 - Model 
+
+## 3.1 - Model Training (optional)
+
+## 3.2 - Setting up the Model (optional)
+
+# 4 - Application
+When there is no need for any model training or setting up a new model, the pre-trained model can be directly applied to the preprocessed data. The function `classify_breeding_behaviour` takes the preprocessed data and the metadata information as input and returns a data frame with the original data and an additional column indicating the classified breeding behaviour state for each time point.
+```{r}
+
 ```
