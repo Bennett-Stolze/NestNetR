@@ -2,25 +2,43 @@
 % Please edit documentation in R/BreedingBehaviour.R
 \name{preprocessing}
 \alias{preprocessing}
-\title{Assemble biologger data for the breeding period}
+\title{Assemble and segment biologger data for the breeding period}
 \usage{
-preprocessing(raw_light, raw_deg, tm.breeding, tz = "UTC")
+preprocessing(
+  raw_light,
+  raw_deg,
+  tm.breeding,
+  tz = "UTC",
+  segment_days = 2,
+  overlap_days = 1,
+  Light_quantiles = c(0.95, 11.1),
+  Tmin_quantiles = c(-3.1, 22),
+  Tmax_quantiles = c(2.9, 40.8)
+)
 }
 \arguments{
 \item{raw_light}{data.frame with POSIXct-like column \code{Date} (from \code{read_lux()}).}
 
-\item{raw_deg}{data.frame with POSIXct-like column \code{Date} (from \code{read_deg()}),
-and (optionally) numeric columns \code{Tmin}, \code{Tmax}.}
+\item{raw_deg}{data.frame with POSIXct-like column \code{Date} (from \code{read_deg()}).}
 
 \item{tm.breeding}{Named vector of class \code{Date} (length 2; names 'start','end').}
 
-\item{tz}{Character scalar, time zone used for all conversions (default "UTC").}
+\item{tz}{Character scalar, time zone (default "UTC").}
+
+\item{segment_days}{integer, segment length in days (default 2).}
+
+\item{overlap_days}{integer, overlap in days (default 1).}
+
+\item{Light_quantiles}{numeric length 2, rescaling bounds.}
+
+\item{Tmin_quantiles}{numeric length 2, rescaling bounds.}
+
+\item{Tmax_quantiles}{numeric length 2, rescaling bounds.}
 }
 \value{
-A cleaned data.frame containing biologger data (light, Tmin, Tmax)
-for the specified breeding period.
+A list with raw data, segmented windows, and flattened training data.
 }
 \description{
-Subsets light (.lux) and temperature (.deg) data to the inferred breeding period
-and joins them into a single cleaned data.frame with filled temperature values.
+Cleans light/temperature data, subsets to breeding window, creates overlapping segments,
+rescales values based on pre-defined quantiles, and flattens them into training-ready lists.
 }

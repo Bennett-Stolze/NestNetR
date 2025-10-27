@@ -313,41 +313,46 @@ set_breeding_period <- function(raw_light, raw_deg, ID, Species, wd, auto = TRUE
   return(tm.breeding)
 }
   
-#' Assemble biologger data for the breeding period
+#' Assemble and segment biologger data for the breeding period
 #'
-#' Subsets light (.lux) and temperature (.deg) data to the inferred breeding period
-#' and joins them into a single cleaned data.frame with filled temperature values.
+#' Cleans light/temperature data, subsets to breeding window, creates overlapping segments,
+#' rescales values based on pre-defined quantiles, and flattens them into training-ready lists.
 #'
 #' @param raw_light data.frame with POSIXct-like column `Date` (from \code{read_lux()}).
-#' @param raw_deg   data.frame with POSIXct-like column `Date` (from \code{read_deg()}),
-#'   and (optionally) numeric columns `Tmin`, `Tmax`.
+#' @param raw_deg   data.frame with POSIXct-like column `Date` (from \code{read_deg()}).
 #' @param tm.breeding Named vector of class \code{Date} (length 2; names 'start','end').
-#' @param tz Character scalar, time zone used for all conversions (default "UTC").
-#' @return A cleaned data.frame containing biologger data (light, Tmin, Tmax)
-#'   for the specified breeding period.
+#' @param tz Character scalar, time zone (default "UTC").
+#' @param segment_days integer, segment length in days (default 2).
+#' @param overlap_days integer, overlap in days (default 1).
+#' @param Light_quantiles numeric length 2, rescaling bounds.
+#' @param Tmin_quantiles numeric length 2, rescaling bounds.
+#' @param Tmax_quantiles numeric length 2, rescaling bounds.
+#' @return A list with raw data, segmented windows, and flattened training data.
 #' @importFrom magrittr %>%
 #' @importFrom rlang abort warn inform
-#' @importFrom dplyr filter mutate select arrange full_join any_of across
+#' @importFrom dplyr filter mutate select arrange full_join any_of
 #' @importFrom tidyr fill drop_na
+#' @importFrom lubridate floor_date ceiling_date
 #' @export
-preprocessing <- function(raw_light, raw_deg, tm.breeding, tz = "UTC") {
-  # ---- basic argument checks ---------------------------------------------------
+preprocessing <- function(raw_light, raw_deg, tm.breeding, tz = "UTC",
+                          segment_days = 2, overlap_days = 1,
+                          Light_quantiles = c(0.95, 11.1),
+                          Tmin_quantiles  = c(-3.1, 22.0),
+                          Tmax_quantiles  = c(2.9, 40.8)) {
+  # ---- checks ----------------------------------------------------------------
   if (!is.data.frame(raw_light)) rlang::abort("`raw_light` must be a data.frame.")
   if (!is.data.frame(raw_deg))   rlang::abort("`raw_deg` must be a data.frame.")
-  
   if (!("Date" %in% names(raw_light))) rlang::abort("`raw_light` needs a `Date` column.")
   if (!("Date" %in% names(raw_deg)))   rlang::abort("`raw_deg` needs a `Date` column.")
-  
-  if (!(inherits(tm.breeding, "Date") && length(tm.breeding) == 2L)) {
+  if (!(inherits(tm.breeding, "Date") && length(tm.breeding) == 2L))
     rlang::abort("`tm.breeding` must be a Date vector of length 2 (start, end).")
-  }
-
   if (any(is.na(tm.breeding))) rlang::abort("`tm.breeding` contains NA values.")
-  if (tm.breeding[2] < tm.breeding[1]) rlang::abort("`tm.breeding[end]` is earlier than `tm.breeding[start]`.")
+  if (tm.breeding[2] < tm.breeding[1]) rlang::abort("`end` date is earlier than `start`.")
+  
   
   # heuristics about window length (tweak thresholds for your species/system)
   win_len <- as.integer(diff(tm.breeding)) + 1L
-  if (win_len < 3L)  rlang::warn(paste0("Breeding window is only ", win_len, " day(s)."))
+  if (win_len < 15L)  rlang::warn(paste0("Breeding window is only ", win_len, " day(s)."))
   if (win_len > 130L) rlang::warn(paste0("Breeding window is very long (", win_len,
                                          " days) — check inputs."))
   
@@ -404,6 +409,52 @@ preprocessing <- function(raw_light, raw_deg, tm.breeding, tz = "UTC") {
     rlang::abort("All rows dropped during cleaning. Please inspect inputs.")
   }
   
-  return(raw_breeding)
+  # ---- segmentation ---------------------------------------------------------
+  min_time <- lubridate::floor_date(min(raw_breeding$Date), unit = "day")
+  max_time <- lubridate::ceiling_date(max(raw_breeding$Date), unit = "day")
+  seg_dur  <- segment_days * 86400
+  ovl_dur  <- overlap_days * 86400
+  
+  segments <- list(); current_start <- min_time; id <- 1
+  while (current_start + seg_dur <= max_time) {
+    current_end <- current_start + seg_dur
+    segment <- raw_breeding %>%
+      filter(Date >= current_start, Date < current_end)
+    segments[[id]] <- list(
+      name = paste0(id, "_", as.Date(current_start)),
+      data = segment
+    )
+    id <- id + 1; current_start <- current_start + ovl_dur
+  }
+  
+  # ---- rescaling ------------------------------------------------------------
+  rescale <- function(x, min_val, max_val) pmin(pmax((x - min_val) / (max_val - min_val), 0), 1)
+  
+  segments <- lapply(segments, function(item) {
+    df <- item$data %>%
+      mutate(
+        Light = if ("Light" %in% names(.)) rescale(Light, Light_quantiles[1], Light_quantiles[2]) else Light,
+        Tmin  = if ("Tmin"  %in% names(.)) rescale(Tmin,  Tmin_quantiles[1],  Tmin_quantiles[2])  else Tmin,
+        Tmax  = if ("Tmax"  %in% names(.)) rescale(Tmax,  Tmax_quantiles[1],  Tmax_quantiles[2])  else Tmax
+      ) %>%
+      select(Light, Tmin, Tmax)
+    list(name = item$name, data = df)
+  })
+  
+  # ---- flatten segments into vectors ----------------------------------------
+  flat <- lapply(seq_along(segments), function(i) {
+    item <- segments[[i]]
+    parts <- strsplit(item$name, "_")[[1]]
+    list(
+      Light  = as.vector(item$data$Light),
+      Tmin   = as.vector(item$data$Tmin),
+      Tmax   = as.vector(item$data$Tmax),
+      Date   = as.Date(parts[2]),
+      Window = as.numeric(parts[1])
+    )
+  })
+  
+  # ---- return ---------------------------------------------------------------
+  return(flat)
 }
 
