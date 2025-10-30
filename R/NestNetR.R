@@ -21,12 +21,12 @@
 #'
 #' @examples
 #' \donttest{
-#' # raw <- read_lux("path/to/file.lux")
+#' # raw <- read_light("path/to/file.lux")
 #' }
 #'
 #' @importFrom utils read.csv 
 #' @export
-read_lux <- function(lux_file, tz = "UTC", small = 1e-4) {
+read_light <- function(lux_file, tz = "UTC", small = 1e-4) {
   stopifnot(is.character(lux_file), length(lux_file) == 1)
   if (!file.exists(lux_file)) {
     stop("File not found: ", lux_file, call. = FALSE)
@@ -119,7 +119,7 @@ read_deg <- function(deg_file, tz = "UTC") {
 #' to infer the breeding period as the longest continuous run of days with
 #' light/temperature present but no twilight events.
 #'
-#' @param raw_light data.frame with POSIXct column `Date` (from \code{read_lux()}).
+#' @param raw_light data.frame with POSIXct column `Date` (from \code{read_light()}).
 #' @param raw_deg   data.frame with POSIXct column `Date` (from \code{read_deg()}).
 #' @param ID        Character scalar; individual ID used to locate the twilight file.
 #' @param Species   Character scalar; species subfolder used to locate the twilight file.
@@ -134,12 +134,13 @@ read_deg <- function(deg_file, tz = "UTC") {
 #' @importFrom dplyr filter mutate arrange
 #' @importFrom lubridate hour
 #' @export
-set_breeding_period <- function(raw_light, raw_deg, ID, Species, wd, auto = TRUE, gr.Device = 'default') {
+set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device = 'default', 
+                                lmax = 10, wight = 10, hieght = 5) {
   stopifnot("Date" %in% names(raw_light), "Date" %in% names(raw_deg))
   
-  # ---- Twilight events ---------------------------------------------------------
+  # ---- Infer breeding window automatically ---------------------------------------------------
   if (isTRUE(auto)) {
-    twl_path <- file.path(wd, "RawData", Species, paste0(ID, "_twl.csv"))
+    twl_path <- file.path(dir.raw, paste0(ID, "_twl.csv"))
     if (!file.exists(twl_path)) stop("Twilight file not found: ", twl_path)
     
     twl <- read.csv(twl_path, stringsAsFactors = FALSE) %>%
@@ -153,12 +154,11 @@ set_breeding_period <- function(raw_light, raw_deg, ID, Species, wd, auto = TRUE
     # drop first sunrise if needed
     if (nrow(twl) > 0 && twl$Rise[1]) twl <- twl[-1, ]
     
-    # ---- Infer breeding window automatically ---------------------------------------------------
     light_day <- unique(as.Date(raw_light$Date))
     deg_day   <- unique(as.Date(raw_deg$Date))
-    twl_day   <- if (isTRUE(auto)) unique(as.Date(twl$Twilight_date)) else NULL
+    twl_day   <- unique(as.Date(twl$Twilight_date))
     
-    all_days <- seq(min(c(light_day, deg_day), na.rm = TRUE),
+    all_days <- seq(min(c(twl_day), na.rm = TRUE),
                     max(c(light_day, deg_day), na.rm = TRUE),
                     by = "day")
     
@@ -174,16 +174,12 @@ set_breeding_period <- function(raw_light, raw_deg, ID, Species, wd, auto = TRUE
     
   } else {
     # ---- Infer breeding window manually ---------------------------------------------------
-    offset <- 0
-    lmax <- 10
     zlim <- c(0,lmax)
     extend <- 0
     dark.min <- 0
     twilights <- NULL
     stage <- 1
     point.cex <- 0.8
-    width <- 12
-    height <- 4
     zoom <- 6
     raw_light_cut <- raw_light
     
@@ -221,7 +217,7 @@ set_breeding_period <- function(raw_light, raw_deg, ID, Species, wd, auto = TRUE
     ## Draw the logger data  (winA)
     winADraw <- function() {
       setDevice(winA)
-      lightImage(raw_light, offset = offset, zlim = zlim)
+      lightImage(raw_light, offset = 0, zlim = zlim)
       TwGeos:::selectionRectangle(Date1,Date2,col="red")
       title(main = "Select Breeding Period",
             sub = "left click: Start Point, right click: End Point, a: save period, q = quit"
@@ -319,7 +315,7 @@ set_breeding_period <- function(raw_light, raw_deg, ID, Species, wd, auto = TRUE
 #' rescales values based on pre-defined quantiles, and flattens them into training-ready lists.
 #'
 #' @param ID Character scalar; individual or deployment ID.
-#' @param raw_light data.frame with POSIXct-like column `Date` (from \code{read_lux()}).
+#' @param raw_light data.frame with POSIXct-like column `Date` (from \code{read_light()}).
 #' @param raw_deg   data.frame with POSIXct-like column `Date` (from \code{read_deg()}).
 #' @param tm.breeding Named vector of class \code{Date} (length 2; names 'start','end').
 #' @param dir.breeding Character scalar; directory to save breeding data as .csv.
@@ -337,12 +333,12 @@ set_breeding_period <- function(raw_light, raw_deg, ID, Species, wd, auto = TRUE
 #' @importFrom lubridate floor_date ceiling_date
 #' @importFrom purrr imap
 #' @export
-preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz = "UTC",
+preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
                           segment_days = 1, overlap_days = 1,
                           Light_quantiles = c(0.9478656, 11.2115639),
                           Tmin_quantiles  = c(-2.8, 23.5),
                           Tmax_quantiles  = c(3.0, 40.8)) {
-  # ---- checks ----------------------------------------------------------------
+  # ---- checks ---
   if (!is.data.frame(raw_light)) rlang::abort("`raw_light` must be a data.frame.")
   if (!is.data.frame(raw_deg))   rlang::abort("`raw_deg` must be a data.frame.")
   if (!("Date" %in% names(raw_light))) rlang::abort("`raw_light` needs a `Date` column.")
@@ -359,7 +355,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
   if (win_len > 130L) rlang::warn(paste0("Breeding window is very long (", win_len,
                                          " days) — check inputs."))
   
-  # ---- normalise bounds to POSIXct in one tz ----------------------------------
+  # ---- normalise bounds to POSIXct in one tz ---
   # (also check if inputs came with different tz attributes)
   tz_light <- attr(raw_light$Date, "tzone")
   tz_deg   <- attr(raw_deg$Date,   "tzone")
@@ -376,7 +372,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
   
   norm_time <- function(x) as.POSIXct(x, tz = tz)
   
-  # ---- subset data -------------------------------------------------------------
+  # ---- subset data ---
   raw_light_bre <- raw_light %>%
     mutate(Date = norm_time(Date)) %>%
     filter(Date >= start_buf, Date <= end_buf)
@@ -390,7 +386,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
     rlang::abort("No rows fall inside the (buffered) breeding window. Check dates and time zone.")
   }
   
-  # ---- join & clean ------------------------------------------------------------
+  # ---- join & clean ---
   raw_breeding <- raw_light_bre %>%
     full_join(raw_deg_bre, by = "Date") %>%
     arrange(Date)
@@ -412,7 +408,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
     rlang::abort("All rows dropped during cleaning. Please inspect inputs.")
   }
   
-  # ---- segmentation ---------------------------------------------------------
+  # ---- segmentation ---
   min_time <- lubridate::floor_date(min(raw_breeding$Date), unit = "day")
   max_time <- lubridate::ceiling_date(max(raw_breeding$Date), unit = "day")
   seg_dur  <- segment_days * 86400
@@ -426,7 +422,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
       filter(Date >= current_start, Date < current_end)
     
     # Create the segment name directly
-    seg_name <- paste0(ID,"_", id, "_", as.Date(current_start))
+    seg_name <- paste0(id, "_", as.Date(current_start))
     
     # Assign the data.frame directly to that list name
     segments[[seg_name]] <- segment
@@ -435,7 +431,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
     current_start <- current_start + ovl_dur
   }
   
-  # ---- filter incomplete segments ------------------------------------------
+  # ---- filter incomplete segments ---
   expected_len <- segment_days * 24 * (60 / 5)
   segments <- segments[sapply(segments, nrow) == expected_len]
   
@@ -443,7 +439,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
     rlang::warn("No complete segments retained after filtering — check input resolution or window size.")
   }
   
-  # ---- rescaling ------------------------------------------------------------
+  # ---- rescaling ---
   rescale <- function(x, min_val, max_val) pmin(pmax((x - min_val) / (max_val - min_val), 0), 1)
   
   segments <- lapply(segments, function(df) {
@@ -456,7 +452,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
       select(Light, Tmin, Tmax)
   })
   
-  # ---- flatten segments into vectors ----------------------------------------
+  # ---- flatten segments into vectors ---
   flat <- imap(segments, function(seg, list_name) {
     seg <- as.data.frame(seg)
     
@@ -474,32 +470,11 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
       Light  = if ("Light" %in% names(dat)) as.vector(dat$Light) else NA,
       Tmin   = if ("Tmin"  %in% names(dat)) as.vector(dat$Tmin)  else NA,
       Tmax   = if ("Tmax"  %in% names(dat)) as.vector(dat$Tmax)  else NA,
-      ID     = parts[1],
-      Window = as.numeric(parts[2]),
-      Date   = as.Date(parts[3])
+      ID     = ID,
+      Window = as.numeric(parts[1]),
+      Date   = as.Date(parts[2])
     )
   })
-  
-  # ---- save & return --------------------------------------------------------
-  # Save each segment as .csv
-  if (exists("dir.breeding")) {
-    if (!dir.exists(dir.breeding)) dir.create(dir.breeding, recursive = TRUE)
-    
-    # Combine all segments into one data frame
-    combined <- do.call(rbind, lapply(flat, as.data.frame))
-    
-    # Extract ID (everything before first "_")
-    id_name <- sub("_.*", "", names(flat)[1])
-    
-    # Build file name
-    out_path <- file.path(dir.breeding, paste0(id_name, "_breeding_data.csv"))
-    
-    # Write to CSV
-    readr::write_csv(combined, out_path)
-    
-    message("✅ Saved combined breeding data for ", id_name, " to: ", out_path)
-  }
-  
   return(flat)
 }
 
@@ -546,11 +521,11 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, dir.breeding, tz 
 #' @importFrom lubridate year
 #' @export
 classify_breeding_behaviour <- function(breeding_data, model = "base") {
-  # --- find minimum sequence length automatically ---------------------------
+  # --- find minimum sequence length automatically ---
   seq_lengths <- sapply(breeding_data, function(x) length(x$Light))
   minlen <- min(seq_lengths, na.rm = TRUE)
   
-  # --- preprocess for model input --------------------------------------------
+  # --- preprocess for model input ---
   light_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
     vals <- as.numeric(x$Light)
     if (length(vals) >= minlen) vals[1:minlen]
@@ -567,21 +542,20 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   }))
   x_breeding <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 3)
   
-  # --- load model ------------------------------------------------------------
+  # --- load model ---
   if (model == "base") {
-    model <- "base"
-  } else if (model == costum) {
-    model <- "costum"
-  } else {
-    stop("Invalid model specified. Use 'base' or 'costum'.")
+    model <- file.path(wd, "Model", "base_model.keras")
+  } 
+  
+  if (grepl("\\.keras$", model) == FALSE) {
+    stop("Invalid model specified. Use 'base' or indicate correct file with .keras extension.")
   }
+  model <- keras3::load_model(model)
   
-  model <- keras3::load_model(file.path(wd, "Model", paste0(model,"_model.keras")))
-  
-  # --- Predictions -----------------------------------------------------------
+  # --- Predictions ---
   predictions <- model %>% predict(x_breeding)
   
-  # --- process prediction output --------------------------------------------
+  # --- process prediction output ---
   # Convert predictions to a data frame
   classes <- c("brooding", "incubation", "random")
   predictions <- as.data.frame(predictions)
@@ -591,7 +565,7 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   predicted_classes <- apply(predictions, 1, which.max)
   predicted_classes <- levels(factor(classes))[predicted_classes]
   
-  # --- reassemble metadata ---------------------------------------------------
+  # --- reassemble metadata ---
   breeding_data_df <- lapply(breeding_data, function(x) {
     x$Light <- NULL  # Remove the "Light" entry from each list
     x$Light_raw <- NULL
@@ -605,7 +579,7 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
     return(x)  # Return the modified list
   })
   
-  # --- combine everything ----------------------------------------------------
+  # --- combine everything ---
   breeding_data_df <- do.call(rbind, breeding_data_df)
   
   predictions <- cbind(breeding_data_df, predictions)
@@ -620,66 +594,47 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   return(predictions)
 }
 
-#' Create breeding data list (split into segments)
+#' Create list of breeding-period segments
 #'
-#' Reads combined breeding-period `.csv` files (one per individual) from a
-#' directory and splits each into its original daily/segment sublists, based on
-#' the `Window` or `Date` column.
+#' Reads individual `.lux` and `.deg` files from a directory, determines each
+#' bird’s breeding period, preprocesses the data, and stores the resulting
+#' segmented time series per individual. Each list element corresponds to one
+#' individual ID and contains a list of its breeding-period segments.
 #'
-#' @param data.dir.breeding Directory containing the combined `.csv` files
-#'   (e.g. `"data/Breeding/"`).
-#' @param tz Character; time zone of the `Date` column (default `"UTC"`).
-#' @return A named list of individuals, each containing its own list of segments.
+#' @param dir.raw Character; directory containing raw `.lux` and `.deg` files
+#'   (e.g. `"data/RawData/SpeciesName/"`).
+#' @param auto Logical; if `TRUE` (default), breeding periods are detected
+#'   automatically using \code{set_breeding_period()}. Otherwise, manually annotation is required.a
+#'
+#' @return A named list of individuals, each containing its own list of
+#'   breeding-period segments as lists of vectors.
+#'
+#'@importFrom utils txtProgressBar setTxtProgressBar
 #' @export
-create_breeding_data_list <- function(data.dir.breeding, tz = "UTC") {
+create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1) {
+  ID_list <- sub("\\.lux$", "", basename(list.files(dir.raw, pattern = ".lux", full.names = TRUE)))
+  Species <- strsplit(dir.raw, "/")[[1]][[3]]
   
-  csv_files <- list.files(data.dir.breeding, pattern = "\\.csv$", full.names = TRUE)
-  if (length(csv_files) == 0L)
-    rlang::abort(paste("No .csv files found in", data.dir.breeding))
+  # Create emtpy list
+  breeding_data_list <- list()
   
-  breeding_data_list <- vector("list", length(csv_files))
-  names(breeding_data_list) <- sub("_breeding_data.*", "", tools::file_path_sans_ext(basename(csv_files)))
+  # Progress bar
+  pb <- txtProgressBar(min = 0, max = length(ID_list), style = 3, width = 25)
   
-  pb <- txtProgressBar(min = 0, max = length(csv_files), style = 3, width = 25)
-  
-  for (i in seq_along(csv_files)) {
+  for (ID in ID_list) {
+    raw_light <- NestNetR::read_light(file.path(dir.raw, paste0(ID, ".lux")))
+    raw_deg <- NestNetR::read_deg(file.path(dir.raw, paste0(ID, ".deg")))
     
-    ID <- names(breeding_data_list)[i]
-    file_path <- csv_files[i]
+    tm.breeding <- NestNetR::set_breeding_period(raw_light, raw_deg, ID, auto)
     
-    dat <- try(readr::read_csv(file_path, show_col_types = FALSE), silent = TRUE)
-    if (inherits(dat, "try-error")) {
-      warning(paste("Skipping", ID, "- error reading file"))
-      next
-    }
+    breeding_data <- NestNetR::preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days = segment_days)
     
-    dat <- dat |>
-      dplyr::mutate(Date = as.POSIXct(Date, tz = tz)) |>
-      dplyr::arrange(Date)
+    breeding_data_list[[ID]] <- breeding_data
     
-    # ---- split back into segment sublists ---------------------------------
-    if ("Window" %in% names(dat)) {
-      split_list <- split(dat, dat$Window)
-    } else {
-      warning(paste("No 'Window' column in", ID, "- skipping segmentation"))
-      split_list <- list(dat)
-    }
-    
-    # rename segments with window + date
-    names(split_list) <- sapply(seq_along(split_list), function(j) {
-      seg_date <- format(min(split_list[[j]]$Date), "%Y-%m-%d")
-      paste0(j, "_", seg_date)
-    })
-    
-    breeding_data_list[[i]] <- split_list
-    setTxtProgressBar(pb, i)
+    setTxtProgressBar(pb, which(ID_list == ID))
   }
   
   close(pb)
-
-  #breeding_data_list <- unlist(breeding_data_list, recursive = FALSE)
-  #names(breeding_data_list) <- gsub("\\.", "_", names(breeding_data_list))
-  
   return(breeding_data_list)
 }
 
@@ -745,7 +700,8 @@ create_breeding_data_list <- function(data.dir.breeding, tz = "UTC") {
 #' @export
 create_trainingdata <- function(breeding_data_list, segment_days, zlim=c(0,10), width=10, height=5, gr.Device='default'){
   random_count <- brooding_count <- incubation_count <- 0
-  history <- list(); quit <- FALSE
+  history <- list() 
+  quit <- FALSE
   
   id_summary <- do.call(rbind, lapply(names(breeding_data_list), function(id) {
     segs <- breeding_data_list[[id]]
@@ -779,10 +735,10 @@ create_trainingdata <- function(breeding_data_list, segment_days, zlim=c(0,10), 
     ID <- parts[1]
     window <- parts[2]
     Date1 <- as.POSIXct(paste0(parts[3]," 00:00:00"), tz="UTC")
-    Date2 <- Date1 + lubridate::days(segment_days)
+    Date2 <- Date1 + segment_days*24*60*60
     start_date <- id_summary[id_summary$ID==ID,"start_date"]
     end_date <- id_summary[id_summary$ID==ID,"end_date"]
-    tagdata <- subset(read_lux(file.path(wd,"RawData",Species,paste0(ID,".lux"))),
+    tagdata <- subset(read_light(file.path(wd,"RawData",Species,paste0(ID,".lux"))),
                       Date >= start_date & Date <= end_date)
     
     # --- ensure Date1 and Date2 fall within available data ---
@@ -899,6 +855,11 @@ create_trainingdata <- function(breeding_data_list, segment_days, zlim=c(0,10), 
       # save in history
       history[[length(history)+1]] <- list(chosen=chosen, class=behaviour_label)
     }
+    breeding_data_list
   }
-  breeding_data_list
+  preclassified_data <- breeding_data_list[
+    sapply(breeding_data_list, function(x) {
+      "Label" %in% names(x) && !is.null(x$Label) && identical(x$Label, "training")
+    })]
+  preclassified_data
 }
