@@ -9,7 +9,6 @@ preprocessing(
   raw_light,
   raw_deg,
   tm.breeding,
-  dir.breeding,
   tz = "UTC",
   segment_days = 1,
   overlap_days = 1,
@@ -21,13 +20,11 @@ preprocessing(
 \arguments{
 \item{ID}{Character scalar; individual or deployment ID.}
 
-\item{raw_light}{data.frame with POSIXct-like column \code{Date} (from \code{read_lux()}).}
+\item{raw_light}{data.frame with POSIXct-like column \code{Date} (from \code{read_light()}).}
 
 \item{raw_deg}{data.frame with POSIXct-like column \code{Date} (from \code{read_deg()}).}
 
 \item{tm.breeding}{Named vector of class \code{Date} (length 2; names 'start','end').}
-
-\item{dir.breeding}{Character scalar; directory to save breeding data as .csv.}
 
 \item{tz}{Character scalar, time zone (default "UTC").}
 
@@ -40,6 +37,8 @@ preprocessing(
 \item{Tmin_quantiles}{numeric length 2, rescaling bounds.}
 
 \item{Tmax_quantiles}{numeric length 2, rescaling bounds.}
+
+\item{dir.breeding}{Character scalar; directory to save breeding data as .csv.}
 }
 \value{
 A list with raw data, segmented windows, and flattened training data.

@@ -4,29 +4,21 @@
 \alias{set_breeding_period}
 \title{Determine breeding period (start & end dates) from data coverage}
 \usage{
-set_breeding_period(
-  raw_light,
-  raw_deg,
-  ID,
-  Species,
-  wd,
-  auto = TRUE,
-  gr.Device = "default"
-)
+set_breeding_period(raw_light, raw_deg, ID, auto = TRUE, gr.Device = "default")
 }
 \arguments{
-\item{raw_light}{data.frame with POSIXct column \code{Date} (from \code{read_lux()}).}
+\item{raw_light}{data.frame with POSIXct column \code{Date} (from \code{read_light()}).}
 
 \item{raw_deg}{data.frame with POSIXct column \code{Date} (from \code{read_deg()}).}
 
 \item{ID}{Character scalar; individual ID used to locate the twilight file.}
 
+\item{auto}{Logical; if \code{TRUE} (default), read the twilight file automatically
+and infer the breeding period.}
+
 \item{Species}{Character scalar; species subfolder used to locate the twilight file.}
 
 \item{wd}{Character scalar; project working directory root.}
-
-\item{auto}{Logical; if \code{TRUE} (default), read the twilight file automatically
-and infer the breeding period.}
 }
 \value{
 A data.frame of raw biologger data restricted to the inferred breeding period,

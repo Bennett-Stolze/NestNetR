@@ -2,21 +2,24 @@
 % Please edit documentation in R/NestNetR.R
 \name{create_breeding_data_list}
 \alias{create_breeding_data_list}
-\title{Create breeding data list (split into segments)}
+\title{Create list of breeding-period segments}
 \usage{
-create_breeding_data_list(data.dir.breeding, tz = "UTC")
+create_breeding_data_list(dir.raw, auto = TRUE, segment_days = 1)
 }
 \arguments{
-\item{data.dir.breeding}{Directory containing the combined \code{.csv} files
-(e.g. \code{"data/Breeding/"}).}
+\item{dir.raw}{Character; directory containing raw \code{.lux} and \code{.deg} files
+(e.g. \code{"data/RawData/SpeciesName/"}).}
 
-\item{tz}{Character; time zone of the \code{Date} column (default \code{"UTC"}).}
+\item{auto}{Logical; if \code{TRUE} (default), breeding periods are detected
+automatically using \code{set_breeding_period()}. Otherwise, manually annotation is required.a}
 }
 \value{
-A named list of individuals, each containing its own list of segments.
+A named list of individuals, each containing its own list of
+breeding-period segments as lists of vectors.
 }
 \description{
-Reads combined breeding-period \code{.csv} files (one per individual) from a
-directory and splits each into its original daily/segment sublists, based on
-the \code{Window} or \code{Date} column.
+Reads individual \code{.lux} and \code{.deg} files from a directory, determines each
+bird’s breeding period, preprocesses the data, and stores the resulting
+segmented time series per individual. Each list element corresponds to one
+individual ID and contains a list of its breeding-period segments.
 }
