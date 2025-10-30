@@ -1,10 +1,16 @@
 ---
-title: "Package Vignette"
-output: rmarkdown::html_vignette
+title: "Getting Started with NestNetR"
+author: "BP Stolze, M. Klaassen, S. Lisovski"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: 
+    toc: true
+  html_document:
+    toc: true
 vignette: >
-  %\VignetteIndexEntry{getting-started}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Getting Started with NestNetR}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
@@ -17,14 +23,14 @@ devtools::document()
 # Getting started {#start}
 To classify breeding behaviour from light-level geolocator data in R we need a couple of R packages as well as functions that allow to run our code. 
 
-The package requires _devtools_ (install if necessary using the _install.packages()_ function). With _devtools_ on your system, you are able to download and built as well as install R packages directly from GitHub (e.g. _BreedingBehaviour_).
+The package requires _devtools_ (install if necessary using the _install.packages()_ function). With _devtools_ on your system, you are able to download and built as well as install R packages directly from GitHub (e.g. _NestNetR_).
 
 ```{r, eval = FALSE}
 library(devtools)
 install_github("bennett-stolze/NestNetR")
 ```
 
-You should now be able to load the package. We recommend to check (every now and then), if there is a new version of _BreedingBehaviour_ available. And if that is the case, re-install the package using the same code you used for initial installation.
+You should now be able to load the package. We recommend to check (every now and then), if there is a new version of _NestNetR_ available. And if that is the case, re-install the package using the same code you used for initial installation.
 
 ```{r, message=FALSE, warning=FALSE}
 library(NestNetR)
@@ -40,7 +46,7 @@ The most frequently used geolocators provide files with the extension `.lux` (Mi
 With the suggested data structure, we can then define metadata information on the individual and the species and define the sub-folder for saving and extracting data files.
 
 ```{r}
-ID <- "BB959"
+ID <- "BH967(1)"
 Species <- "RuddyTurnstone" 
 wd <- "data"
 dir.raw <- file.path(wd, "RawData", Species)
@@ -73,12 +79,11 @@ tm.breeding <- set_breeding_period(raw_light, raw_deg, ID, auto = TRUE)
 tm.breeding
 ```
 
-
 If no twilight file is available, the breeding period can be manually defined using the argument `auto = FALSE`. In this case, an interactive plotting window opens that displays the light profile of the selected individual across the entire recording period.
 Users can visually inspect the data to determine when the bird likely arrived at and departed from the breeding grounds. These points are typically indicated by a stable pattern of high light intensity (continuous daylight in the Arctic). To specify the range, simply left-click to set the start of the breeding period and right-click to set the end. The function then returns the start and end dates of the selected breeding period for further processing.
 
 *Manual Approach*
-```{r}
+```{r, eval = FALSE}
 tm.breeding <- set_breeding_period(raw_light, raw_deg, ID, auto = FALSE, gr.Device = "x11")
 tm.breeding
 ```
@@ -104,7 +109,7 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
 # 3 - Model (optional)
 In this optional section, users can design and train their own deep-learning model for classifying breeding behaviour. Alternatively, a pre-trained model (based on Ruddy Turnstones) can be loaded directly in `Chapter 4 – Application`.
 This section allows full flexibility to adjust parameters such as the architecture, training, window length or class weights.
-```{r setup}
+```{r, eval = FALSE}
 library(keras3)
 library(caret)
 
@@ -120,7 +125,7 @@ weight_random <- 0.8
 ## 3.1 - Creating a training dataset
 Before model training, a labelled dataset needs to be created.
 Users can gather data from all available geolocator recordings and manually classify representative samples of each behavioural class (brooding, incubation, random). The resulting dataset is then split into training and test subsets for performance evaluation. The following code demonstrates one approach to create and partition such data, but users may freely adapt file structures, proportions, or sampling routines.
-```{r}
+```{r, eval = FALSE}
 # gather data from all available geolocator records of your species 
 breeding_data_list <- create_breeding_data_list(dir.raw, segment_days)
 
@@ -143,7 +148,7 @@ Users can modify any component — from input features and layer types to kernel
 ### 3.2.1 - Preparing data for model training
 Input data (Light, Tmin, Tmax) are truncated to equal window lengths and combined into 3-channel arrays for model input. You may add or remove variables as you wish.
 #### Entire dataset
-```{r}
+```{r, eval = FALSE}
 light_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
   vals <- as.numeric(x$Light)
   if (length(vals) >= minlen) vals[1:minlen]
@@ -164,7 +169,7 @@ x_breeding <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, alon
 ```
 
 #### Training data
-```{r}
+```{r, eval = FALSE}
 light_truncated <- do.call(rbind, lapply(training_data, function(x) {
   vals <- as.numeric(x$Light)
   if (length(vals) >= minlen) vals[1:minlen]
@@ -185,7 +190,7 @@ x_training <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, alon
 ```
 
 #### Test data
-```{r}
+```{r, eval = FALSE}
 light_truncated <- do.call(rbind, lapply(test_data, function(x) {
   vals <- as.numeric(x$Light)
   if (length(vals) >= minlen) vals[1:minlen]
@@ -207,7 +212,7 @@ x_test <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 
 
 ### 3.2.2 - Training using 5-fold cross-validation
 The example below outlines a standard 5-fold training routine for assessing model robustness. Users can modify the number of folds, metrics, or validation strategies as desired. Each fold’s best model is stored for later comparison.
-```{r}
+```{r, eval = FALSE}
 model_name <- "costum"
 # link directory
 dir.model <- file.path(wd, "Model", model_name)
@@ -333,7 +338,7 @@ if(sd(cv_results$val_accuracy) > 0.1) {
 
 ### 3.2.3 - Final training on full training dataset
 Once the best architecture and configuration is identified, the model can be retrained on the entire training dataset to obtain a final model.
-```{r}
+```{r, eval = FALSE}
 # indicate file path for final model
 path_final_model <- file.path(dir.model, "final_model.keras")
 
@@ -372,7 +377,7 @@ history <- model %>% keras3::fit(
 
 ## 3.2.4 - Evaluating the model performance on test data
 The final model can be validated against the previously created, held-out test set to evaluate the overall model performance.
-```{r}
+```{r, eval = FALSE}
 # Make predictions on test set
 classes_test <- sapply(test_data, `[[`, "Class")
 y_test <- to_categorical(as.numeric(factor(classes_test)) - 1)
@@ -392,24 +397,36 @@ cm <- confusionMatrix(
 ```
 
 
-
 # 4 - Application
-When there is no need for training or setting up a new model, the pre-trained base model can be directly applied to the preprocessed data.
+When there is no need for training or setting up a new model, the pre-trained base model can be directly applied to the preprocessed data. The base model was built using one-day windows of Ruddy Turnstone data. Input data thus also needs to be in the same resolution.
 The function `classify_breeding_behaviour` takes the preprocessed dataset and its associated metadata as input and returns a list containing the predicted probabilities for each breeding behaviour state (brooding, incubation, random) across all time windows.
 ```{r}
 classified_breeding <- classify_breeding_behaviour(breeding_data)
+classified_breeding
 ```
 
 Alternatively, if a custom model has been created in Section 3, it can be loaded by specifying its file path via the argument `model = path_final_model`.
-```{r}
+```{r, eval = FALSE}
 classified_breeding <- classify_breeding_behaviour(breeding_data, model = path_final_model)
+classified_breeding
 ```
 
 ## Processing of multiple individuals
-```{r}
-breeding_data_list <- create_breeding_data_list
+```{r, eval = FALSE}
+breeding_data_list <- create_breeding_data_list(dir.raw, auto = TRUE, segment_days = 1)
 
+# Create an empty list to store results
+classified_breeding <- list()
+
+# Loop through all individuals
 for (ID in names(breeding_data_list)) {
-  
+  message("Processing ID: ", ID)
+  # Store in list
+  classified_breeding[[ID]] <- classify_breeding_behaviour(breeding_data_list[[ID]])
 }
+
+# Combine all results into one data.frame
+classified_breeding <- do.call(rbind, classified_breeding)
+# Remove row names
+rownames(classified_breeding) <- NULL
 ```

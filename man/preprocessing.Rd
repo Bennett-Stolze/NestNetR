@@ -2,7 +2,7 @@
 % Please edit documentation in R/NestNetR.R
 \name{preprocessing}
 \alias{preprocessing}
-\title{Assemble and segment biologger data for the breeding period}
+\title{Prepare breeding-period biologger data for model input}
 \usage{
 preprocessing(
   ID,
@@ -18,32 +18,70 @@ preprocessing(
 )
 }
 \arguments{
-\item{ID}{Character scalar; individual or deployment ID.}
+\item{ID}{Character scalar; \strong{individual or deployment identifier} used to tag
+all resulting segments.}
 
-\item{raw_light}{data.frame with POSIXct-like column \code{Date} (from \code{read_light()}).}
+\item{raw_light}{Data frame with POSIXct column \code{Date} (from
+\code{read_light()}), containing \strong{log-transformed light data}.}
 
-\item{raw_deg}{data.frame with POSIXct-like column \code{Date} (from \code{read_deg()}).}
+\item{raw_deg}{Data frame with POSIXct column \code{Date} (from
+\code{read_deg()}), containing \strong{minimum and maximum temperature readings}
+derived from the same logger.}
 
-\item{tm.breeding}{Named vector of class \code{Date} (length 2; names 'start','end').}
+\item{tm.breeding}{Named vector of class \code{Date} (length 2; names
+\code{start}, \code{end}) defining the breeding period boundaries
+(typically returned by \code{set_breeding_period()}).}
 
-\item{tz}{Character scalar, time zone (default "UTC").}
+\item{tz}{Character scalar; time zone to which timestamps are converted
+(default \code{"UTC"}).}
 
-\item{segment_days}{integer, segment length in days (default 2).}
+\item{segment_days}{Integer; duration of one analysis window in days
+(default = \strong{1 day}, corresponding to 288 five-minute steps).}
 
-\item{overlap_days}{integer, overlap in days (default 1).}
+\item{overlap_days}{Integer; overlap between consecutive segments in days
+(default = \strong{1 day}, i.e. fully overlapping daily windows).}
 
-\item{Light_quantiles}{numeric length 2, rescaling bounds.}
+\item{Light_quantiles}{Numeric vector (length 2); lower and upper quantiles used
+for \strong{light-value rescaling} (defaults based on the 2.5 \% and 97.5 \%
+percentiles across the Ruddy Turnstone dataset).}
 
-\item{Tmin_quantiles}{numeric length 2, rescaling bounds.}
+\item{Tmin_quantiles}{Numeric vector (length 2); analogous quantiles for
+minimum temperature.}
 
-\item{Tmax_quantiles}{numeric length 2, rescaling bounds.}
+\item{Tmax_quantiles}{Numeric vector (length 2); analogous quantiles for
+maximum temperature.}
 
-\item{dir.breeding}{Character scalar; directory to save breeding data as .csv.}
+\item{dir.breeding}{Character scalar; directory where processed data could be
+stored (currently unused but reserved for optional export as \code{.csv}).}
 }
 \value{
-A list with raw data, segmented windows, and flattened training data.
+A \strong{list of flattened segment objects}, each containing:
+\describe{
+\item{Light, Tmin, Tmax}{Numeric vectors (length = segment_days × 288)
+scaled to 0–1 range.}
+\item{ID}{Character; deployment ID.}
+\item{Window}{Sequential number of the segment.}
+\item{Date}{Date corresponding to the segment start.}
 }
 \description{
-Cleans light/temperature data, subsets to breeding window, creates overlapping segments,
-rescales values based on pre-defined quantiles, and flattens them into training-ready lists.
+\strong{Assembles, cleans, and segments biologger data for the Arctic breeding period}
+into standardised time windows suitable for deep-learning classification.
+Specifically, this function \strong{subsets light and temperature data to the inferred
+breeding window, applies rescaling based on quantile ranges, and
+generates overlapping, fixed-length segments (windows) representing continuous
+sequences of biologger measurements.}
+}
+\details{
+Light and temperature data are aligned, interpolated, and trimmed to the
+breeding window before being split into overlapping windows of equal length.
+Each variable is then rescaled using pre-defined empirical quantiles to ensure
+comparability across individuals and seasons, matching the input expectations
+of the CNN architecture.
+}
+\examples{
+\donttest{
+tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142")
+breeding_data <- preprocessing("D142", raw_light, raw_deg, tm.breeding)
+}
+
 }

@@ -2,38 +2,44 @@
 % Please edit documentation in R/NestNetR.R
 \name{read_light}
 \alias{read_light}
-\title{Read a .lux light file}
+\title{Read a light-level geolocator file}
 \usage{
-read_light(lux_file, tz = "UTC", small = 1e-04)
+read_light(light_file, tz = "UTC")
 }
 \arguments{
-\item{lux_file}{Character scalar. Path to the \code{.lux} file.}
+\item{light_file}{Character scalar; path to the exported light data file.}
 
-\item{tz}{Character time zone passed to \code{as.POSIXct}. Default \code{"UTC"}.}
-
-\item{small}{Small positive constant added before \code{log} to avoid
-\code{log(0)}. Default \code{1e-4}.}
+\item{tz}{Character; time zone passed to \code{as.POSIXct}. Default \code{"UTC"}.}
 }
 \value{
 A \code{data.frame} with columns:
 \describe{
-\item{Date}{POSIXct (UTC by default)}
-\item{Light}{non-negative, log-transformed light}
+\item{Date}{POSIXct timestamps (UTC by default).}
+\item{Light}{Non-negative, log-transformed light intensity values.}
 }
 }
 \description{
-Parses a \code{.lux} file exported from geolocators and returns a
-two-column data frame with timestamps and log-transformed light values.
+\strong{Reads and parses raw light intensity data} from a \code{.lux} file exported
+from Migrate Technology \emph{Intigeo} geolocators and returns a tidy
+two-column \code{data.frame} containing timestamps and \strong{log-transformed,
+normalised light values}.
 }
 \details{
-The function looks for the first line beginning with \code{"DD/MM/YYYY"}
-(typical header marker) and reads the tab-separated data from there.
-Light is transformed as \eqn{\log(light + small)} and shifted to be
-non-negative.
+The function searches for the first line starting with \code{"DD/MM/YYYY"}
+(typical Intigeo header marker) and reads tab-separated data from that point.
+Light values are transformed as \eqn{\log(light +  1e-4)} to enhance low-light
+variation and shifted to be non-negative. This transformation ensures
+comparability with light data used for twilight estimation and deep-learning
+input.
+
+The resulting dataset serves as the input for further processing steps such as
+twilight extraction (\code{TwGeos::preprocessLight}) or breeding period detection
+within the \pkg{NestNetR} workflow.
 }
 \examples{
 \donttest{
-# raw <- read_light("path/to/file.lux")
+light_df <- read_light("Rawdata/D142.lux")
+head(light_df)
 }
 
 }

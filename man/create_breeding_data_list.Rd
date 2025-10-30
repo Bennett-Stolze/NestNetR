@@ -2,24 +2,37 @@
 % Please edit documentation in R/NestNetR.R
 \name{create_breeding_data_list}
 \alias{create_breeding_data_list}
-\title{Create list of breeding-period segments}
+\title{Create list of segmented breeding period datasets for mulitple individuals}
 \usage{
 create_breeding_data_list(dir.raw, auto = TRUE, segment_days = 1)
 }
 \arguments{
-\item{dir.raw}{Character; directory containing raw \code{.lux} and \code{.deg} files
+\item{dir.raw}{Character; directory containing raw light and temperature files
 (e.g. \code{"data/RawData/SpeciesName/"}).}
 
 \item{auto}{Logical; if \code{TRUE} (default), breeding periods are detected
-automatically using \code{set_breeding_period()}. Otherwise, manually annotation is required.a}
+automatically using \code{set_breeding_period()}. Otherwise, manually annotation is required.}
+
+\item{segment_days}{Integer; length of each segmentation window in days
+(default = \strong{1 day}, corresponding to 288 five-minute steps).}
 }
 \value{
-A named list of individuals, each containing its own list of
-breeding-period segments as lists of vectors.
+A \strong{named list} where each element corresponds to one individual ID
+and contains that individual’s segmented and normalised breeding-period data.
+Each sub-element is itself a list of window objects with numeric vectors
+(\code{Light}, \code{Tmin}, \code{Tmax}) and metadata fields (\code{ID},
+\code{Window}, \code{Date}).
 }
 \description{
-Reads individual \code{.lux} and \code{.deg} files from a directory, determines each
+\strong{Automates the full preprocessing workflow across multiple geolocator files.}
+Reads individual light and temperature files from a directory, determines each
 bird’s breeding period, preprocesses the data, and stores the resulting
 segmented time series per individual. Each list element corresponds to one
 individual ID and contains a list of its breeding-period segments.
+}
+\examples{
+\donttest{
+breeding_data_list <- create_breeding_data_list("data/RawData/RuddyTurnstone/", auto = TRUE)
+}
+
 }

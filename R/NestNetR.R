@@ -1,45 +1,53 @@
-#' Read a .lux light file
+#' Read a light-level geolocator file
 #'
-#' Parses a \code{.lux} file exported from geolocators and returns a
-#' two-column data frame with timestamps and log-transformed light values.
+#' **Reads and parses raw light intensity data** from a \code{.lux} file exported
+#' from Migrate Technology \emph{Intigeo} geolocators and returns a tidy
+#' two-column \code{data.frame} containing timestamps and **log-transformed,
+#' normalised light values**.
 #'
-#' The function looks for the first line beginning with \code{"DD/MM/YYYY"}
-#' (typical header marker) and reads the tab-separated data from there.
-#' Light is transformed as \eqn{\log(light + small)} and shifted to be
-#' non-negative.
+#' The function searches for the first line starting with \code{"DD/MM/YYYY"}
+#' (typical Intigeo header marker) and reads tab-separated data from that point.
+#' Light values are transformed as \eqn{\log(light +  1e-4)} to enhance low-light
+#' variation and shifted to be non-negative. This transformation ensures
+#' comparability with light data used for twilight estimation and deep-learning
+#' input.
 #'
-#' @param lux_file Character scalar. Path to the \code{.lux} file.
-#' @param tz Character time zone passed to \code{as.POSIXct}. Default \code{"UTC"}.
-#' @param small Small positive constant added before \code{log} to avoid
-#'   \code{log(0)}. Default \code{1e-4}.
+#' @param light_file Character scalar; path to the exported light data file.
+#' @param tz Character; time zone passed to \code{as.POSIXct}. Default \code{"UTC"}.
 #'
 #' @return A \code{data.frame} with columns:
 #' \describe{
-#'   \item{Date}{POSIXct (UTC by default)}
-#'   \item{Light}{non-negative, log-transformed light}
+#'   \item{Date}{POSIXct timestamps (UTC by default).}
+#'   \item{Light}{Non-negative, log-transformed light intensity values.}
 #' }
+#'
+#' @details
+#' The resulting dataset serves as the input for further processing steps such as
+#' twilight extraction (\code{TwGeos::preprocessLight}) or breeding period detection
+#' within the \pkg{NestNetR} workflow.
 #'
 #' @examples
 #' \donttest{
-#' # raw <- read_light("path/to/file.lux")
+#' light_df <- read_light("Rawdata/D142.lux")
+#' head(light_df)
 #' }
 #'
-#' @importFrom utils read.csv 
+#' @importFrom utils read.csv
 #' @export
-read_light <- function(lux_file, tz = "UTC", small = 1e-4) {
-  stopifnot(is.character(lux_file), length(lux_file) == 1)
-  if (!file.exists(lux_file)) {
-    stop("File not found: ", lux_file, call. = FALSE)
+read_light <- function(light_file, tz = "UTC") {
+  stopifnot(is.character(light_file), length(light_file) == 1)
+  if (!file.exists(light_file)) {
+    stop("File not found: ", light_file, call. = FALSE)
   }
   
-  raw_lines <- base::readLines(lux_file, warn = FALSE)
+  raw_lines <- base::readLines(light_file, warn = FALSE)
   line_index <- grep("^DD/MM/YYYY", raw_lines)
   if (length(line_index) == 0) {
-    stop("Could not find header marker 'DD/MM/YYYY' in file: ", lux_file, call. = FALSE)
+    stop("Could not find header marker 'DD/MM/YYYY' in file: ", light_file, call. = FALSE)
   }
   
   dat <- utils::read.csv(
-    lux_file, header = FALSE, skip = line_index,
+    light_file, header = FALSE, skip = line_index,
     sep = "\t",
     col.names = c("Date", "Light"),
     colClasses = c("character", "numeric"),
@@ -48,7 +56,7 @@ read_light <- function(lux_file, tz = "UTC", small = 1e-4) {
   
   # Parse time and transform light
   dat$Date  <- as.POSIXct(strptime(dat$Date, "%d/%m/%Y %H:%M:%S", tz = tz), tz = tz)
-  log_light <- log(dat$Light + small)
+  log_light <- log(dat$Light + 1e-4)
   dat$Light <- log_light - min(log_light, na.rm = TRUE)  # shift to >= 0
   
   dat
@@ -121,21 +129,49 @@ read_deg <- function(deg_file, tz = "UTC") {
 #'
 #' @param raw_light data.frame with POSIXct column `Date` (from \code{read_light()}).
 #' @param raw_deg   data.frame with POSIXct column `Date` (from \code{read_deg()}).
-#' @param ID        Character scalar; individual ID used to locate the twilight file.
-#' @param Species   Character scalar; species subfolder used to locate the twilight file.
-#' @param wd        Character scalar; project working directory root.
+#' @param ID        Character scalar; individual ID used to locate the twilight file (\code{<ID>_twl.csv}).
 #' @param auto      Logical; if \code{TRUE} (default), read the twilight file automatically
 #'                  and infer the breeding period.
 #'
-#' @return A data.frame of raw biologger data restricted to the inferred breeding period,
-#'   with light, Tmin, and Tmax columns.
-#' @importFrom magrittr %>%
+#' @return A named vector containing:
+#' \describe{
+#'   \item{start}{Date of breeding period start (arrival at breeding site).}
+#'   \item{end}{Date of breeding period end (departure from breeding site).}
+#' }
+#'   
+#' 
+#' @details
+#' **Automatic detection** relies on the absence of twilight events in otherwise
+#' continuous light and temperature coverage, which typically corresponds to the
+#' 24-hour daylight of the Arctic breeding season. The function identifies the
+#' longest such segment within the recording period and returns its start and end.
+#'
+#' **Manual selection** opens two interactive plots (full-year and zoomed views)
+#' of the light data using \code{TwGeos::lightImage()}, allowing the user to
+#' visually define the breeding window with mouse clicks:
+#' \itemize{
+#'   \item Left click = start of breeding period.
+#'   \item Right click = end of breeding period.
+#'   \item Press \code{a} to save selection, \code{q} to quit.
+#' }
+#' This manual mode is particularly useful when no twilight file is available or
+#' when automatic detection yields ambiguous results.
+#' 
+#' @examples
+#' \donttest{
+#' # Automatic detection using twilight file
+#' tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142", auto = TRUE)
+#'
+#' # Manual visual selection (e.g., when no twilight file available)
+#' tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142", auto = FALSE)
+#' }
+#' 
 #' @importFrom TwGeos lightImage
 #' @importFrom dplyr filter mutate arrange
-#' @importFrom lubridate hour
+#' @importFrom lubridate hour month
 #' @export
 set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device = 'default', 
-                                lmax = 10, wight = 10, hieght = 5) {
+                                lmax = 10, wight = 10, height = 5) {
   stopifnot("Date" %in% names(raw_light), "Date" %in% names(raw_deg))
   
   # ---- Infer breeding window automatically ---------------------------------------------------
@@ -143,12 +179,12 @@ set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device =
     twl_path <- file.path(dir.raw, paste0(ID, "_twl.csv"))
     if (!file.exists(twl_path)) stop("Twilight file not found: ", twl_path)
     
-    twl <- read.csv(twl_path, stringsAsFactors = FALSE) %>%
-      filter(!Deleted) %>%
+    twl <- read.csv(twl_path, stringsAsFactors = FALSE) |>
+      filter(!Deleted) |>
       mutate(
         Twilight = as.POSIXct(Twilight, tz = "UTC"),
         Twilight_date = as.Date(Twilight)
-      ) %>%
+      ) |>
       arrange(Twilight)
     
     # drop first sunrise if needed
@@ -158,15 +194,29 @@ set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device =
     deg_day   <- unique(as.Date(raw_deg$Date))
     twl_day   <- unique(as.Date(twl$Twilight_date))
     
-    all_days <- seq(min(c(twl_day), na.rm = TRUE),
-                    max(c(light_day, deg_day), na.rm = TRUE),
-                    by = "day")
-    
+    #---- Define temporal range ------------------------------------------------
+    twl_start <- min(twl_day, na.rm = TRUE)
+    twl_end   <- max(twl_day, na.rm = TRUE)
+
+    # # If the last twilight date falls within the Arctic breeding season (Apr–Sep),
+    # # extend trimming to the end of that calendar year to capture full breeding data
+    # if (lubridate::month(twl_end) %in% 5:9) {
+    #   end_of_year <- as.Date(paste0(lubridate::year(twl_end), "-12-31"))
+    #   light_day <- light_day[light_day <= end_of_year]
+    #   deg_day   <- deg_day[deg_day <= end_of_year]
+    # } else {
+      # Trim light and temperature data to the end of twilight period
+      #light_day <- light_day[light_day <= twl_end]
+      #deg_day   <- deg_day[deg_day <= twl_end]
+    # }
+
+    # Define complete timeline within chosen range
+    all_days <- seq(twl_start, max(c(light_day, deg_day), na.rm = TRUE), by = "day")
     twl_missing <- (all_days %in% light_day | all_days %in% deg_day) & !(all_days %in% twl_day)
     if (!any(twl_missing)) return(c(start = NA, end = NA))
     
     r <- rle(twl_missing)
-    i <- which.max(ifelse(r$values, r$lengths, 0))
+    i <- which(r$values)[1]
     end_row   <- sum(r$lengths[seq_len(i)])
     start_row <- end_row - r$lengths[i] + 1
     tm.breeding <- c(start = all_days[start_row], end = all_days[end_row])
@@ -228,7 +278,7 @@ set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device =
     winBDraw <- function() {
       setDevice(winB)
       ## Display zoomed image
-      lightImage(raw_light_cut, offset = offset, zlim = zlim)
+      lightImage(raw_light_cut, offset = 0, zlim = zlim)
       title(main = paste0("Starting Point: ", as.Date(Date1)," - ", "Ending Point: ", as.Date(Date2)))
     }
     
@@ -309,24 +359,62 @@ set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device =
   return(tm.breeding)
 }
   
-#' Assemble and segment biologger data for the breeding period
+#' Prepare breeding-period biologger data for model input
 #'
-#' Cleans light/temperature data, subsets to breeding window, creates overlapping segments,
-#' rescales values based on pre-defined quantiles, and flattens them into training-ready lists.
+#' **Assembles, cleans, and segments biologger data for the Arctic breeding period**
+#' into standardised time windows suitable for deep-learning classification.  
+#' Specifically, this function **subsets light and temperature data to the inferred
+#' breeding window, applies rescaling based on quantile ranges, and
+#' generates overlapping, fixed-length segments (windows) representing continuous
+#' sequences of biologger measurements.**
 #'
-#' @param ID Character scalar; individual or deployment ID.
-#' @param raw_light data.frame with POSIXct-like column `Date` (from \code{read_light()}).
-#' @param raw_deg   data.frame with POSIXct-like column `Date` (from \code{read_deg()}).
-#' @param tm.breeding Named vector of class \code{Date} (length 2; names 'start','end').
-#' @param dir.breeding Character scalar; directory to save breeding data as .csv.
-#' @param tz Character scalar, time zone (default "UTC").
-#' @param segment_days integer, segment length in days (default 2).
-#' @param overlap_days integer, overlap in days (default 1).
-#' @param Light_quantiles numeric length 2, rescaling bounds.
-#' @param Tmin_quantiles numeric length 2, rescaling bounds.
-#' @param Tmax_quantiles numeric length 2, rescaling bounds.
-#' @return A list with raw data, segmented windows, and flattened training data.
-#' @importFrom magrittr %>%
+#' @param ID Character scalar; **individual or deployment identifier** used to tag
+#'   all resulting segments.
+#' @param raw_light Data frame with POSIXct column \code{Date} (from
+#'   \code{read_light()}), containing **log-transformed light data**.
+#' @param raw_deg Data frame with POSIXct column \code{Date} (from
+#'   \code{read_deg()}), containing **minimum and maximum temperature readings**
+#'   derived from the same logger.
+#' @param tm.breeding Named vector of class \code{Date} (length 2; names
+#'   \code{start}, \code{end}) defining the breeding period boundaries
+#'   (typically returned by \code{set_breeding_period()}).
+#' @param dir.breeding Character scalar; directory where processed data could be
+#'   stored (currently unused but reserved for optional export as \code{.csv}).
+#' @param tz Character scalar; time zone to which timestamps are converted
+#'   (default \code{"UTC"}).
+#' @param segment_days Integer; duration of one analysis window in days
+#'   (default = **1 day**, corresponding to 288 five-minute steps).
+#' @param overlap_days Integer; overlap between consecutive segments in days
+#'   (default = **1 day**, i.e. fully overlapping daily windows).
+#' @param Light_quantiles Numeric vector (length 2); lower and upper quantiles used
+#'   for **light-value rescaling** (defaults based on the 2.5 % and 97.5 %
+#'   percentiles across the Ruddy Turnstone dataset).
+#' @param Tmin_quantiles Numeric vector (length 2); analogous quantiles for
+#'   minimum temperature.
+#' @param Tmax_quantiles Numeric vector (length 2); analogous quantiles for
+#'   maximum temperature.
+#'   
+#' @return A **list of flattened segment objects**, each containing:
+#' \describe{
+#'   \item{Light, Tmin, Tmax}{Numeric vectors (length = segment_days × 288)
+#'     scaled to 0–1 range.}
+#'   \item{ID}{Character; deployment ID.}
+#'   \item{Window}{Sequential number of the segment.}
+#'   \item{Date}{Date corresponding to the segment start.}
+#' 
+#' @details
+#' Light and temperature data are aligned, interpolated, and trimmed to the
+#' breeding window before being split into overlapping windows of equal length.
+#' Each variable is then rescaled using pre-defined empirical quantiles to ensure
+#' comparability across individuals and seasons, matching the input expectations
+#' of the CNN architecture.
+#' 
+#' @examples
+#' \donttest{
+#' tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142")
+#' breeding_data <- preprocessing("D142", raw_light, raw_deg, tm.breeding)
+#' }
+#'
 #' @importFrom rlang abort warn inform
 #' @importFrom dplyr filter mutate select arrange full_join any_of
 #' @importFrom tidyr fill drop_na
@@ -338,7 +426,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
                           Light_quantiles = c(0.9478656, 11.2115639),
                           Tmin_quantiles  = c(-2.8, 23.5),
                           Tmax_quantiles  = c(3.0, 40.8)) {
-  # ---- checks ---
+  # ---- checks --- 
   if (!is.data.frame(raw_light)) rlang::abort("`raw_light` must be a data.frame.")
   if (!is.data.frame(raw_deg))   rlang::abort("`raw_deg` must be a data.frame.")
   if (!("Date" %in% names(raw_light))) rlang::abort("`raw_light` needs a `Date` column.")
@@ -351,8 +439,8 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
   
   # heuristics about window length (tweak thresholds for your species/system)
   win_len <- as.integer(diff(tm.breeding)) + 1L
-  if (win_len < 15L)  rlang::warn(paste0("Breeding window is only ", win_len, " day(s)."))
-  if (win_len > 130L) rlang::warn(paste0("Breeding window is very long (", win_len,
+  if (win_len < 40L)  rlang::warn(paste0("Breeding window for ID ", ID, " is only ", win_len, " day(s)."))
+  if (win_len > 80L) rlang::warn(paste0("Breeding window for ID ", ID, " is very long (", win_len,
                                          " days) — check inputs."))
   
   # ---- normalise bounds to POSIXct in one tz ---
@@ -373,13 +461,13 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
   norm_time <- function(x) as.POSIXct(x, tz = tz)
   
   # ---- subset data ---
-  raw_light_bre <- raw_light %>%
-    mutate(Date = norm_time(Date)) %>%
+  raw_light_bre <- raw_light |>
+    mutate(Date = norm_time(Date)) |>
     filter(Date >= start_buf, Date <= end_buf)
   
-  raw_deg_bre <- raw_deg %>%
-    mutate(Date = norm_time(Date)) %>%
-    filter(Date >= start_buf, Date <= end_buf) %>%
+  raw_deg_bre <- raw_deg |>
+    mutate(Date = norm_time(Date)) |>
+    filter(Date >= start_buf, Date <= end_buf) |>
     select(-any_of(c("Wets", "Conductivity")))
   
   if (nrow(raw_light_bre) == 0L && nrow(raw_deg_bre) == 0L) {
@@ -387,8 +475,8 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
   }
   
   # ---- join & clean ---
-  raw_breeding <- raw_light_bre %>%
-    full_join(raw_deg_bre, by = "Date") %>%
+  raw_breeding <- raw_light_bre |>
+    full_join(raw_deg_bre, by = "Date") |>
     arrange(Date)
   
   # duplicates check
@@ -398,10 +486,10 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
                        "Consider aggregating first if this is unexpected."))
   }
   
-  raw_breeding <- raw_breeding %>%
-    tidyr::fill(Tmin, Tmax, .direction = "up") %>%
-    select(-any_of("Light_raw")) %>%
-    filter(Date >= start_cut, Date < end_cut) %>%
+  raw_breeding <- raw_breeding |>
+    tidyr::fill(Tmin, Tmax, .direction = "up") |>
+    select(-any_of("Light_raw")) |>
+    filter(Date >= start_cut, Date < end_cut) |>
     tidyr::drop_na()
   
   if (nrow(raw_breeding) == 0L) {
@@ -418,7 +506,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
   while (current_start + seg_dur <= max_time) {
     current_end <- current_start + seg_dur
     
-    segment <- raw_breeding %>%
+    segment <- raw_breeding |>
       filter(Date >= current_start, Date < current_end)
     
     # Create the segment name directly
@@ -443,12 +531,12 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
   rescale <- function(x, min_val, max_val) pmin(pmax((x - min_val) / (max_val - min_val), 0), 1)
   
   segments <- lapply(segments, function(df) {
-    df %>%
+    df |>
       mutate(
-        Light = if ("Light" %in% names(.)) rescale(Light, Light_quantiles[1], Light_quantiles[2]) else Light,
-        Tmin  = if ("Tmin"  %in% names(.)) rescale(Tmin,  Tmin_quantiles[1],  Tmin_quantiles[2])  else Tmin,
-        Tmax  = if ("Tmax"  %in% names(.)) rescale(Tmax,  Tmax_quantiles[1],  Tmax_quantiles[2])  else Tmax
-      ) %>%
+        Light = if ("Light" %in% names(df)) rescale(Light, Light_quantiles[1], Light_quantiles[2]) else Light,
+        Tmin  = if ("Tmin"  %in% names(df)) rescale(Tmin,  Tmin_quantiles[1],  Tmin_quantiles[2])  else Tmin,
+        Tmax  = if ("Tmax"  %in% names(df)) rescale(Tmax,  Tmax_quantiles[1],  Tmax_quantiles[2])  else Tmax
+      ) |>
       select(Light, Tmin, Tmax)
   })
   
@@ -456,12 +544,12 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
   flat <- imap(segments, function(seg, list_name) {
     seg <- as.data.frame(seg)
     
-    dat <- seg %>%
+    dat <- seg |>
       mutate(
         Light = if ("Light" %in% names(seg)) as.numeric(Light) else NULL,
         Tmin  = if ("Tmin"  %in% names(seg)) as.numeric(Tmin)  else NULL,
         Tmax  = if ("Tmax"  %in% names(seg)) as.numeric(Tmax)  else NULL
-      ) %>%
+      ) |>
       select(any_of(c("Light", "Tmin", "Tmax")))
     
     parts <- strsplit(list_name, "_")[[1]]
@@ -481,8 +569,8 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
 #' Classify breeding behaviour from segmented biologger data
 #'
 #' Applies a pre-trained deep learning model to predict breeding behaviours
-#' (e.g. incubation, brooding, off-nest) for each segmented biologger window.
-#' The function loads a saved CNN–LSTM model, generates predictions from
+#' (incubation, brooding, random) for each segmented biologger window.
+#' The function loads a pre-trained CNN model, generates predictions from
 #' light- and temperature-based input sequences, and formats results into a
 #' clean data frame ready for ecological analysis or visualisation.
 #'
@@ -490,6 +578,9 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
 #'   returned by \code{preprocessing()} or similar, where each list element
 #'   contains \code{Light}, \code{Tmin}, and \code{Tmax} vectors, plus metadata
 #'   fields (\code{ID}, \code{Window}, \code{Date}).
+#' @param model Character; either the keyword \code{"base"} (default, loading
+#'   \code{Model/base_model.keras} from the working directory) or a full path to a
+#'   custom \code{.keras} file.
 #'
 #' @details
 #' Internally, the function truncates all input channels to a common window
@@ -553,7 +644,7 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   model <- keras3::load_model(model)
   
   # --- Predictions ---
-  predictions <- model %>% predict(x_breeding)
+  predictions <- model |> predict(x_breeding)
   
   # --- process prediction output ---
   # Convert predictions to a data frame
@@ -594,22 +685,34 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   return(predictions)
 }
 
-#' Create list of breeding-period segments
+#' Create list of segmented breeding period datasets for mulitple individuals
 #'
-#' Reads individual `.lux` and `.deg` files from a directory, determines each
+#' **Automates the full preprocessing workflow across multiple geolocator files.**
+#' Reads individual light and temperature files from a directory, determines each
 #' bird’s breeding period, preprocesses the data, and stores the resulting
 #' segmented time series per individual. Each list element corresponds to one
 #' individual ID and contains a list of its breeding-period segments.
 #'
-#' @param dir.raw Character; directory containing raw `.lux` and `.deg` files
+#' @param dir.raw Character; directory containing raw light and temperature files
 #'   (e.g. `"data/RawData/SpeciesName/"`).
 #' @param auto Logical; if `TRUE` (default), breeding periods are detected
-#'   automatically using \code{set_breeding_period()}. Otherwise, manually annotation is required.a
+#'   automatically using \code{set_breeding_period()}. Otherwise, manually annotation is required.
+#' @param segment_days Integer; length of each segmentation window in days
+#'   (default = **1 day**, corresponding to 288 five-minute steps).
 #'
-#' @return A named list of individuals, each containing its own list of
-#'   breeding-period segments as lists of vectors.
+#' @return A **named list** where each element corresponds to one individual ID
+#'   and contains that individual’s segmented and normalised breeding-period data.
+#'   Each sub-element is itself a list of window objects with numeric vectors
+#'   (\code{Light}, \code{Tmin}, \code{Tmax}) and metadata fields (\code{ID},
+#'   \code{Window}, \code{Date}).
 #'
-#'@importFrom utils txtProgressBar setTxtProgressBar
+#' @examples
+#' \donttest{
+#' breeding_data_list <- create_breeding_data_list("data/RawData/RuddyTurnstone/", auto = TRUE)
+#' }
+#'
+#' @importFrom utils txtProgressBar setTxtProgressBar
+#' 
 #' @export
 create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1) {
   ID_list <- sub("\\.lux$", "", basename(list.files(dir.raw, pattern = ".lux", full.names = TRUE)))
@@ -638,10 +741,10 @@ create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1) {
   return(breeding_data_list)
 }
 
-#' Interactively label random training samples for breeding behaviour classification
+#' Interactively label biologger segments for breeding-behaviour training data
 #'
 #' Opens an interactive graphical interface to manually assign behavioural classes
-#' (e.g. *incubation*, *brooding*, *random/off-nest*) to randomly selected segments
+#' (*incubation*, *brooding*, *random*) to randomly selected segments
 #' from a list of preprocessed biologger data. This function is designed to support
 #' the manual creation of balanced training data for the deep-learning model.
 #'
@@ -652,8 +755,6 @@ create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1) {
 #' @param segment_days Integer; the duration of one segment in days (used to display
 #'   correct time bounds in the plot).
 #' @param lmax Numeric; maximum light intensity used for visual scaling (default = 1).
-#' @param zlim Numeric vector of length two; range of light values displayed on the
-#'   light image (default = \code{c(0, lmax)}).
 #' @param width,height Numeric; dimensions of the plotting window in inches.
 #' @param gr.Device Character; the graphics device used for interactive display.
 #'   Accepts \code{"default"} (RStudioGD) or \code{"x11"} for external windows.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/NestNetR.R
 \name{create_trainingdata}
 \alias{create_trainingdata}
-\title{Interactively label random training samples for breeding behaviour classification}
+\title{Interactively label biologger segments for breeding-behaviour training data}
 \usage{
 create_trainingdata(
   breeding_data_list,
@@ -22,9 +22,6 @@ temperature time series as numeric vectors.}
 \item{segment_days}{Integer; the duration of one segment in days (used to display
 correct time bounds in the plot).}
 
-\item{zlim}{Numeric vector of length two; range of light values displayed on the
-light image (default = \code{c(0, lmax)}).}
-
 \item{width, height}{Numeric; dimensions of the plotting window in inches.}
 
 \item{gr.Device}{Character; the graphics device used for interactive display.
@@ -38,7 +35,7 @@ annotated segments.
 }
 \description{
 Opens an interactive graphical interface to manually assign behavioural classes
-(e.g. \emph{incubation}, \emph{brooding}, \emph{random/off-nest}) to randomly selected segments
+(\emph{incubation}, \emph{brooding}, \emph{random}) to randomly selected segments
 from a list of preprocessed biologger data. This function is designed to support
 the manual creation of balanced training data for the deep-learning model.
 }
