@@ -4,28 +4,63 @@
 \alias{set_breeding_period}
 \title{Determine breeding period (start & end dates) from data coverage}
 \usage{
-set_breeding_period(raw_light, raw_deg, ID, auto = TRUE, gr.Device = "default")
+set_breeding_period(
+  raw_light,
+  raw_deg,
+  ID,
+  auto = TRUE,
+  gr.Device = "default",
+  lmax = 10,
+  wight = 10,
+  height = 5
+)
 }
 \arguments{
 \item{raw_light}{data.frame with POSIXct column \code{Date} (from \code{read_light()}).}
 
 \item{raw_deg}{data.frame with POSIXct column \code{Date} (from \code{read_deg()}).}
 
-\item{ID}{Character scalar; individual ID used to locate the twilight file.}
+\item{ID}{Character scalar; individual ID used to locate the twilight file (\code{<ID>_twl.csv}).}
 
 \item{auto}{Logical; if \code{TRUE} (default), read the twilight file automatically
 and infer the breeding period.}
-
-\item{Species}{Character scalar; species subfolder used to locate the twilight file.}
-
-\item{wd}{Character scalar; project working directory root.}
 }
 \value{
-A data.frame of raw biologger data restricted to the inferred breeding period,
-with light, Tmin, and Tmax columns.
+A named vector containing:
+\describe{
+\item{start}{Date of breeding period start (arrival at breeding site).}
+\item{end}{Date of breeding period end (departure from breeding site).}
+}
 }
 \description{
 Uses daily coverage of light (.lux), temperature (.deg) and twilight (.twl)
 to infer the breeding period as the longest continuous run of days with
 light/temperature present but no twilight events.
+}
+\details{
+\strong{Automatic detection} relies on the absence of twilight events in otherwise
+continuous light and temperature coverage, which typically corresponds to the
+24-hour daylight of the Arctic breeding season. The function identifies the
+longest such segment within the recording period and returns its start and end.
+
+\strong{Manual selection} opens two interactive plots (full-year and zoomed views)
+of the light data using \code{TwGeos::lightImage()}, allowing the user to
+visually define the breeding window with mouse clicks:
+\itemize{
+\item Left click = start of breeding period.
+\item Right click = end of breeding period.
+\item Press \code{a} to save selection, \code{q} to quit.
+}
+This manual mode is particularly useful when no twilight file is available or
+when automatic detection yields ambiguous results.
+}
+\examples{
+\donttest{
+# Automatic detection using twilight file
+tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142", auto = TRUE)
+
+# Manual visual selection (e.g., when no twilight file available)
+tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142", auto = FALSE)
+}
+
 }

@@ -11,6 +11,10 @@ classify_breeding_behaviour(breeding_data, model = "base")
 returned by \code{preprocessing()} or similar, where each list element
 contains \code{Light}, \code{Tmin}, and \code{Tmax} vectors, plus metadata
 fields (\code{ID}, \code{Window}, \code{Date}).}
+
+\item{model}{Character; either the keyword \code{"base"} (default, loading
+\code{Model/base_model.keras} from the working directory) or a full path to a
+custom \code{.keras} file.}
 }
 \value{
 A data frame with one row per segment and columns:
@@ -25,8 +29,8 @@ A data frame with one row per segment and columns:
 }
 \description{
 Applies a pre-trained deep learning model to predict breeding behaviours
-(e.g. incubation, brooding, off-nest) for each segmented biologger window.
-The function loads a saved CNN–LSTM model, generates predictions from
+(incubation, brooding, random) for each segmented biologger window.
+The function loads a pre-trained CNN model, generates predictions from
 light- and temperature-based input sequences, and formats results into a
 clean data frame ready for ecological analysis or visualisation.
 }
