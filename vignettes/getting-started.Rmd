@@ -46,8 +46,8 @@ The most frequently used geolocators provide files with the extension `.lux` (Mi
 With the suggested data structure, we can then define metadata information on the individual and the species and define the sub-folder for saving and extracting data files.
 
 ```{r}
-ID <- "BH967(1)"
-Species <- "RuddyTurnstone" 
+ID <- "X738"
+Species <- "CurlewSandpiper" 
 wd <- "data"
 dir.raw <- file.path(wd, "RawData", Species)
 ```
@@ -127,11 +127,11 @@ Before model training, a labelled dataset needs to be created.
 Users can gather data from all available geolocator recordings and manually classify representative samples of each behavioural class (brooding, incubation, random). The resulting dataset is then split into training and test subsets for performance evaluation. The following code demonstrates one approach to create and partition such data, but users may freely adapt file structures, proportions, or sampling routines.
 ```{r, eval = FALSE}
 # gather data from all available geolocator records of your species 
-breeding_data_list <- create_breeding_data_list(dir.raw, segment_days)
+breeding_data_list <- create_breeding_data_list(dir.raw, segment_days = 1)
 
 # Create training data 
 preclassified_data <- create_trainingdata(breeding_data_list,
-                                          segment_days,
+                                          segment_days = 1,
                                           gr.Device = "x11")
 
 # Partition preclassified data into training- (80%) and test-data (20%) 
@@ -413,7 +413,15 @@ classified_breeding
 
 ## Processing of multiple individuals
 ```{r, eval = FALSE}
-breeding_data_list <- create_breeding_data_list(dir.raw, auto = TRUE, segment_days = 1)
+devtools::document()
+Species <- "CurlewSandpiper" 
+wd <- "data"
+dir.raw <- file.path(wd, "RawData", Species)
+
+breeding_data_list <- create_breeding_data_list(dir.raw, segment_days = 1)
+
+# remove empty lists
+breeding_data_list <- breeding_data_list[lengths(breeding_data_list) > 0]
 
 # Create an empty list to store results
 classified_breeding <- list()
@@ -429,4 +437,13 @@ for (ID in names(breeding_data_list)) {
 classified_breeding <- do.call(rbind, classified_breeding)
 # Remove row names
 rownames(classified_breeding) <- NULL
+
+classified_breeding_df$ID <- sapply(classified_breeding$ID, `[`, 1)
+classified_breeding_df$Window <- sapply(classified_breeding_df$Window, `[`, 1)
+
+utils::write.csv(
+  classified_breeding,
+  file.path(wd, paste0("classified_breeding_results_", Species,".csv")),
+  row.names = FALSE
+)
 ```

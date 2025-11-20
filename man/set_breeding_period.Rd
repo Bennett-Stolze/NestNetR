@@ -11,7 +11,7 @@ set_breeding_period(
   auto = TRUE,
   gr.Device = "default",
   lmax = 10,
-  wight = 10,
+  width = 10,
   height = 5
 )
 }

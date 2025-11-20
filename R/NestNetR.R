@@ -171,7 +171,7 @@ read_deg <- function(deg_file, tz = "UTC") {
 #' @importFrom lubridate hour month
 #' @export
 set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device = 'default', 
-                                lmax = 10, wight = 10, height = 5) {
+                                lmax = 10, width= 10, height = 5) {
   stopifnot("Date" %in% names(raw_light), "Date" %in% names(raw_deg))
   
   # ---- Infer breeding window automatically ---------------------------------------------------
@@ -237,8 +237,8 @@ set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device =
     as.hour <- function(tm) {(as.numeric(tm)-as.numeric(as.POSIXct(as.Date(tm))))/3600}
     
     ## Round down/up to nearest offset
-    floorDate <- function(date) date - ((as.hour(date)-offset)%%24)*60*60
-    ceilingDate <- function(date) date + ((offset-as.hour(date))%%24)*60*60
+    floorDate <- function(date) date - ((as.hour(date))%%24)*60*60
+    ceilingDate <- function(date) date + ((as.hour(date))%%24)*60*60
     
     # Set starting stage & settings
     stage <- 1
@@ -416,7 +416,7 @@ set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device =
 #' }
 #'
 #' @importFrom rlang abort warn inform
-#' @importFrom dplyr filter mutate select arrange full_join any_of
+#' @importFrom dplyr filter mutate select arrange full_join any_of join_by
 #' @importFrom tidyr fill drop_na
 #' @importFrom lubridate floor_date ceiling_date
 #' @importFrom purrr imap
@@ -455,11 +455,11 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
   
   start_buf <- as.POSIXct(as.Date(tm.breeding[1]) - 1L, tz = tz)
   end_buf   <- as.POSIXct(as.Date(tm.breeding[2]) + 1L, tz = tz)
-  start_cut <- as.POSIXct(as.Date(tm.breeding[1]),     tz = tz)
+  start_cut <- as.POSIXct(as.Date(tm.breeding[1]),      tz = tz)
   end_cut   <- as.POSIXct(as.Date(tm.breeding[2]) + 1L, tz = tz)  # end exclusive
   
   norm_time <- function(x) as.POSIXct(x, tz = tz)
-  
+
   # ---- subset data ---
   raw_light_bre <- raw_light |>
     mutate(Date = norm_time(Date)) |>
@@ -474,27 +474,31 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
     rlang::abort("No rows fall inside the (buffered) breeding window. Check dates and time zone.")
   }
   
+  raw_light_bre$Date <- as.POSIXct(raw_light_bre$Date, tz = "UTC")
+  raw_deg_bre$Date   <- as.POSIXct(raw_deg_bre$Date, tz = "UTC")
+  
   # ---- join & clean ---
   raw_breeding <- raw_light_bre |>
-    full_join(raw_deg_bre, by = "Date") |>
-    arrange(Date)
+    dplyr::full_join(raw_deg_bre, by = 'Date')
   
+  raw_breeding <- raw_breeding |>
+    arrange(Date)
+
   # duplicates check
   dup_n <- sum(duplicated(raw_breeding$Date))
   if (dup_n > 0L) {
     rlang::warn(paste0("Found ", dup_n, " duplicated timestamps after join; keeping all. ",
                        "Consider aggregating first if this is unexpected."))
   }
-  
+
   raw_breeding <- raw_breeding |>
     tidyr::fill(Tmin, Tmax, .direction = "up") |>
-    select(-any_of("Light_raw")) |>
     filter(Date >= start_cut, Date < end_cut) |>
     tidyr::drop_na()
   
-  if (nrow(raw_breeding) == 0L) {
-    rlang::abort("All rows dropped during cleaning. Please inspect inputs.")
-  }
+  # if (nrow(raw_breeding) == 0L) {
+  #   rlang::abort("All rows dropped during cleaning. Please inspect inputs.")
+  # }
   
   # ---- segmentation ---
   min_time <- lubridate::floor_date(min(raw_breeding$Date), unit = "day")
@@ -514,6 +518,7 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
     
     # Assign the data.frame directly to that list name
     segments[[seg_name]] <- segment
+    names(segments) <- as.character(names(segments))
     
     id <- id + 1
     current_start <- current_start + ovl_dur
@@ -555,12 +560,12 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
     parts <- strsplit(list_name, "_")[[1]]
     
     list(
-      Light  = if ("Light" %in% names(dat)) as.vector(dat$Light) else NA,
-      Tmin   = if ("Tmin"  %in% names(dat)) as.vector(dat$Tmin)  else NA,
-      Tmax   = if ("Tmax"  %in% names(dat)) as.vector(dat$Tmax)  else NA,
+      Light  = as.vector(dat$Light),
+      Tmin   = as.vector(dat$Tmin),
+      Tmax   = as.vector(dat$Tmax),
       ID     = ID,
-      Window = as.numeric(parts[1]),
-      Date   = as.Date(parts[2])
+      Window = as.integer(gsub("_.*", "", list_name)),  # before the first "_"
+      Date   = parts[[2]]            # directly from data
     )
   })
   return(flat)
@@ -655,7 +660,7 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   # Get the predicted classes
   predicted_classes <- apply(predictions, 1, which.max)
   predicted_classes <- levels(factor(classes))[predicted_classes]
-  
+
   # --- reassemble metadata ---
   breeding_data_df <- lapply(breeding_data, function(x) {
     x$Light <- NULL  # Remove the "Light" entry from each list
@@ -666,7 +671,7 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
     x$Conductivity <- NULL
     x$Class <- NULL
     x$Label <- NULL
-    as.data.frame(x)  # Convert the modified list to a data frame
+    x <- as.data.frame(x)  # Convert the modified list to a data frame
     return(x)  # Return the modified list
   })
   
@@ -714,8 +719,8 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' 
 #' @export
-create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1) {
-  ID_list <- sub("\\.lux$", "", basename(list.files(dir.raw, pattern = ".lux", full.names = TRUE)))
+create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1, pattern = "\\.lux") {
+  ID_list <- as.character(sub("\\.lux$", "", basename(list.files(dir.raw, pattern, full.names = TRUE))))
   Species <- strsplit(dir.raw, "/")[[1]][[3]]
   
   # Create emtpy list
@@ -730,7 +735,7 @@ create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1) {
     
     tm.breeding <- NestNetR::set_breeding_period(raw_light, raw_deg, ID, auto)
     
-    breeding_data <- NestNetR::preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days = segment_days)
+    breeding_data <- NestNetR::preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days)
     
     breeding_data_list[[ID]] <- breeding_data
     

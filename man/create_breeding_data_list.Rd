@@ -4,7 +4,12 @@
 \alias{create_breeding_data_list}
 \title{Create list of segmented breeding period datasets for mulitple individuals}
 \usage{
-create_breeding_data_list(dir.raw, auto = TRUE, segment_days = 1)
+create_breeding_data_list(
+  dir.raw,
+  auto = TRUE,
+  segment_days = 1,
+  pattern = "\\\\.lux"
+)
 }
 \arguments{
 \item{dir.raw}{Character; directory containing raw light and temperature files
