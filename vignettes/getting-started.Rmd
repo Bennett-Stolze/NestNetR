@@ -1,6 +1,6 @@
 ---
 title: "Getting Started with NestNetR"
-author: "BP Stolze, M. Klaassen, S. Lisovski"
+author: "BP Stolze, S. Lisovski"
 date: "`r Sys.Date()`"
 output:
   pdf_document: 
@@ -46,8 +46,8 @@ The most frequently used geolocators provide files with the extension `.lux` (Mi
 With the suggested data structure, we can then define metadata information on the individual and the species and define the sub-folder for saving and extracting data files.
 
 ```{r}
-ID <- "X738"
-Species <- "CurlewSandpiper" 
+ID <- "BB959"
+Species <- "RuddyTurnstone" 
 wd <- "data"
 dir.raw <- file.path(wd, "RawData", Species)
 ```
@@ -412,12 +412,14 @@ classified_breeding
 ```
 
 ## Processing of multiple individuals
+Here, we demonstrate how to apply the pre-installed model to breeding data from multiple individuals. Preprocessed daily input periods are stored as a list, classified iteratively, and combined into a single output table containing predicted breeding states and probabilities for all individuals.
 ```{r, eval = FALSE}
-devtools::document()
-Species <- "CurlewSandpiper" 
+# Define species and directories
+Species <- "RuddyTurnstone" 
 wd <- "data"
 dir.raw <- file.path(wd, "RawData", Species)
 
+# gather data from all available geolocator records of your species
 breeding_data_list <- create_breeding_data_list(dir.raw, segment_days = 1)
 
 # remove empty lists
@@ -429,8 +431,7 @@ classified_breeding <- list()
 # Loop through all individuals
 for (ID in names(breeding_data_list)) {
   message("Processing ID: ", ID)
-  # Store in list
-  classified_breeding[[ID]] <- classify_breeding_behaviour(breeding_data_list[[ID]])
+  classified_breeding[[ID]] <- classify_breeding_behaviour(breeding_data_list[[ID]]) # Store in list
 }
 
 # Combine all results into one data.frame
@@ -438,9 +439,11 @@ classified_breeding <- do.call(rbind, classified_breeding)
 # Remove row names
 rownames(classified_breeding) <- NULL
 
-classified_breeding_df$ID <- sapply(classified_breeding$ID, `[`, 1)
+# Convert to data.frame
+classified_breeding_df$ID <- sapply(classified_breeding$ID, `[`, 1) 
 classified_breeding_df$Window <- sapply(classified_breeding_df$Window, `[`, 1)
 
+# Save results to CSV
 utils::write.csv(
   classified_breeding,
   file.path(wd, paste0("classified_breeding_results_", Species,".csv")),
