@@ -9,3 +9,6 @@ inst/doc
 /doc/
 /Meta/
 .Rbuildignore
+
+# raw data (large)
+data/RawData/
