@@ -5,6 +5,7 @@
 \title{Determine breeding period (start & end dates) from data coverage}
 \usage{
 set_breeding_period(
+  dir.raw,
   raw_light,
   raw_deg,
   ID,
@@ -57,10 +58,10 @@ when automatic detection yields ambiguous results.
 \examples{
 \donttest{
 # Automatic detection using twilight file
-tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142", auto = TRUE)
+tm.breeding <- set_breeding_period(dir.raw, raw_light, raw_deg, ID = "D142", auto = TRUE)
 
 # Manual visual selection (e.g., when no twilight file available)
-tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142", auto = FALSE)
+tm.breeding <- set_breeding_period(dir.raw, raw_light, raw_deg, ID = "D142", auto = FALSE)
 }
 
 }

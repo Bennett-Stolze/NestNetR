@@ -160,17 +160,16 @@ read_deg <- function(deg_file, tz = "UTC") {
 #' @examples
 #' \donttest{
 #' # Automatic detection using twilight file
-#' tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142", auto = TRUE)
+#' tm.breeding <- set_breeding_period(dir.raw, raw_light, raw_deg, ID = "D142", auto = TRUE)
 #'
 #' # Manual visual selection (e.g., when no twilight file available)
-#' tm.breeding <- set_breeding_period(raw_light, raw_deg, ID = "D142", auto = FALSE)
+#' tm.breeding <- set_breeding_period(dir.raw, raw_light, raw_deg, ID = "D142", auto = FALSE)
 #' }
 #' 
 #' @importFrom TwGeos lightImage
 #' @importFrom dplyr filter mutate arrange
-#' @importFrom lubridate hour month
 #' @export
-set_breeding_period <- function(raw_light, raw_deg, ID, auto = TRUE, gr.Device = 'default', 
+set_breeding_period <- function(dir.raw, raw_light, raw_deg, ID, auto = TRUE, gr.Device = 'default', 
                                 lmax = 10, width= 10, height = 5) {
   stopifnot("Date" %in% names(raw_light), "Date" %in% names(raw_deg))
   
@@ -640,7 +639,7 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   
   # --- load model ---
   if (model == "base") {
-    model <- file.path(wd, "Model", "base_model.keras")
+    model <- file.path(getwd(), "Model", "base_model.keras")
   } 
   
   if (grepl("\\.keras$", model) == FALSE) {
@@ -733,7 +732,7 @@ create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1, pa
     raw_light <- NestNetR::read_light(file.path(dir.raw, paste0(ID, ".lux")))
     raw_deg <- NestNetR::read_deg(file.path(dir.raw, paste0(ID, ".deg")))
     
-    tm.breeding <- NestNetR::set_breeding_period(raw_light, raw_deg, ID, auto)
+    tm.breeding <- NestNetR::set_breeding_period(dir.raw, raw_light, raw_deg, ID, auto)
     
     breeding_data <- NestNetR::preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days)
     
@@ -804,7 +803,7 @@ create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1, pa
 #' @importFrom lubridate days
 #' @importFrom TwGeos lightImage
 #' @export
-create_trainingdata <- function(breeding_data_list, segment_days, zlim=c(0,10), width=10, height=5, gr.Device='default'){
+create_trainingdata <- function(breeding_data_list, segment_days, dir.raw, zlim=c(0,10), width=10, height=5, gr.Device='default'){
   random_count <- brooding_count <- incubation_count <- 0
   history <- list() 
   quit <- FALSE
@@ -844,7 +843,7 @@ create_trainingdata <- function(breeding_data_list, segment_days, zlim=c(0,10), 
     Date2 <- Date1 + segment_days*24*60*60
     start_date <- id_summary[id_summary$ID==ID,"start_date"]
     end_date <- id_summary[id_summary$ID==ID,"end_date"]
-    tagdata <- subset(read_light(file.path(wd,"RawData",Species,paste0(ID,".lux"))),
+    tagdata <- subset(read_light(file.path(dir.raw,paste0(ID,".lux"))),
                       Date >= start_date & Date <= end_date)
     
     # --- ensure Date1 and Date2 fall within available data ---

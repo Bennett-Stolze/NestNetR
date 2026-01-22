@@ -7,6 +7,7 @@
 create_trainingdata(
   breeding_data_list,
   segment_days,
+  dir.raw,
   zlim = c(0, 10),
   width = 10,
   height = 5,

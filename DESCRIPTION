@@ -1,14 +1,14 @@
 Package: NestNetR
-Title: Automated Analysis of Breeding Behaviour of Arctic Shorebirds Using Geolocator Data
-Version: 0.0.0.9000
+Title: Deep-learning based Analysis of Breeding Behaviour from Geolocator Data
+Version: 1.0.0
 Authors@R: 
     c(
       person("Bennett Paul", "Stolze", email = "bennettstolze@web.de", role = c("aut", "cre")),
       person("Simeon", "Lisovski", email = "Simeon.Lisovski@gmail.com", role = "aut")
     )
-Description: Provides functions for the preprocessing and analysis of geolocator 
-    and biologger data, including tools to combine light and temperature recordings, 
-    standardise input sequences, and classify breeding behaviour using deep learning models.
+Description: NestNetR provides an integrated R-based workflow for the preprocessing and 
+  analysis of geolocator and biologger data, including tools to combine light and temperature recordings, 
+  standardise input sequences, and classify breeding behaviour using deep-learning models.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -20,6 +20,9 @@ VignetteBuilder: knitr
 Imports:
     dplyr,
     tidyr,
-    tibble,
-    magrittr,
-    TwGeos
+    TwGeos,
+    keras3,
+    tensorflow,
+    purrr,
+    lubridate,
+    abind
