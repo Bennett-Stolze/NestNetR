@@ -639,7 +639,7 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   
   # --- load model ---
   if (model == "base") {
-    model <- file.path(getwd(), "Model", "base_model.keras")
+    model <- file.path(wd, "Model", "base_model.keras")
   } 
   
   if (grepl("\\.keras$", model) == FALSE) {
