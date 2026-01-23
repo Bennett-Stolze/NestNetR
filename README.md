@@ -12,7 +12,8 @@ remotes::install_github("Bennett-Stolze/NestNetR")
 ```
 
 ## Deep-learning backend
-NestNetR uses keras3 with a TensorFlow backend for behaviour classification. Please follow the instructions to install keras3 and TensorFlow in R: https://cran.r-project.org/web/packages/keras3/vignettes/getting_started.html
+NestNetR uses keras3 with a TensorFlow backend for behaviour classification. 
+  Please follow the instructions to install keras3 and TensorFlow in R: https://cran.r-project.org/web/packages/keras3/vignettes/getting_started.html
 ```r
 install.packages("keras3")
 keras3::install_keras(backend = "tensorflow")
@@ -21,6 +22,6 @@ keras3::install_keras(backend = "tensorflow")
 ## Documentation & Usage
 A comprehensive package vignette is included and provides a step-by-step introduction to the complete workflow, including data preprocessing, breeding-period detection, segmentation, and behaviour classification.
 ```r
-library(calibrar)
+library(NestNetR)
 vignette("NestNetR")
 ```
