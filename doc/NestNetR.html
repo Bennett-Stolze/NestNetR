@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Author1, Author2" />
+
+<meta name="date" content="2026-01-26" />
+
+<title>Getting Started with NestNetR</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Getting Started with NestNetR</h1>
+<h4 class="author">Author1, Author2</h4>
+<h4 class="date">2026-01-26</h4>
+
+
+
+<div id="start" class="section level1">
+<h1>Getting started</h1>
+<p>To classify breeding behaviour from light-level geolocator data in R
+we need a couple of R packages as well as functions that allow to run
+our code.</p>
+<p>The package requires <em>devtools</em> (install if necessary using
+the <em>install.packages()</em> function). With <em>devtools</em> on
+your system, you are able to download and built as well as install R
+packages directly from GitHub (e.g. <em>NestNetR</em>).</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(devtools)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">install_github</span>(<span class="st">&quot;bennett-stolze/NestNetR&quot;</span>)</span></code></pre></div>
+<p>You should now be able to load the package. We recommend to check
+(every now and then), if there is a new version of <em>NestNetR</em>
+available. And if that is the case, re-install the package using the
+same code you used for initial installation.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(NestNetR)</span></code></pre></div>
+</div>
+<div id="loading-data" class="section level1">
+<h1>1 - Loading data</h1>
+<div id="raw-data" class="section level2">
+<h2>1.1 - Raw data</h2>
+<p>The first step is to load your raw data into R. Different geolocator
+types (e.g. from different manufacturers or different series) provide
+raw data in different formats. And while there are functions available
+to read a whole range of formats, you may have to either write your own
+function, use simple read text utilities or get in touch with the
+package managers to write code that fits your format if it is not yet
+implemented.</p>
+<p>The most frequently used geolocators provide files with the extension
+<code>.lux</code> (Migrate Technology Ltd), <code>.lig</code> (BAS,
+Biotrack) or <code>.glf</code> (Swiss Ornithological Institute). The
+functions <code>read_light</code> allows you to automatically read these
+different type of files. In most cases the raw data is stored in a text
+file that can also be read in to R using the base function
+<code>read.table()</code>.</p>
+<p>With the suggested data structure, we can then define metadata
+information on the individual and the species and define the sub-folder
+for saving and extracting data files.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;BB959&quot;</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>Species <span class="ot">&lt;-</span> <span class="st">&quot;RuddyTurnstone&quot;</span> </span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>wd <span class="ot">&lt;-</span> <span class="st">&quot;data&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>dir.raw <span class="ot">&lt;-</span> <span class="fu">file.path</span>(wd, <span class="st">&quot;RawData&quot;</span>, Species)</span></code></pre></div>
+<p>By using the above metadata we can use the <code>file.path</code> and
+<code>paste0</code> commands to include this information in reading and
+writing of files. The columns of our data need to be in a specific
+format with Date being a <code>POSIXc</code> class and Light, Tmin &amp;
+Tmax (and potentially other variables) being <code>numeric</code>
+integers. Check if the structure of your data follows the required
+format with the function <code>str</code>. If not, adjust Date format
+with <code>as.POSIXct(raw_light$Date, tz = &quot;GMT&quot;)</code>. We will load
+both light and temperature data to check their structure.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>raw_light <span class="ot">&lt;-</span> <span class="fu">read_light</span>(<span class="fu">file.path</span>(wd, <span class="st">&quot;RawData&quot;</span>, Species, <span class="fu">paste0</span>(ID, <span class="st">&quot;.lux&quot;</span>)))</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">head</span>(raw_light)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;                  Date    Light</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1 2016-11-08 01:18:43 3.849668</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 2 2016-11-08 01:23:43 3.806185</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 3 2016-11-08 01:28:43 4.574234</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 4 2016-11-08 01:33:43 4.594641</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 5 2016-11-08 01:38:43 4.614641</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; 6 2016-11-08 01:43:43 4.614641</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="fu">str</span>(raw_light)</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; &#39;data.frame&#39;:    116986 obs. of  2 variables:</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;  $ Date : POSIXct, format: &quot;2016-11-08 01:18:43&quot; &quot;2016-11-08 01:23:43&quot; ...</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;  $ Light: num  3.85 3.81 4.57 4.59 4.61 ...</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>raw_deg <span class="ot">&lt;-</span> <span class="fu">read_deg</span>(<span class="fu">file.path</span>(wd, <span class="st">&quot;RawData&quot;</span>, Species, <span class="fu">paste0</span>(ID, <span class="st">&quot;.deg&quot;</span>)))</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">head</span>(raw_deg)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt;                  Date Tmin Tmax</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; 1 2016-11-08 17:13:43 15.9 18.4</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; 2 2016-11-08 21:13:43 15.6 15.9</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 3 2016-11-09 01:13:43 15.6 17.4</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 4 2016-11-09 05:13:43 17.4 19.2</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 5 2016-11-09 09:13:43 19.4 20.4</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 6 2016-11-09 13:13:43 17.4 19.4</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">str</span>(raw_deg)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; &#39;data.frame&#39;:    2434 obs. of  3 variables:</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;  $ Date: POSIXct, format: &quot;2016-11-08 17:13:43&quot; &quot;2016-11-08 21:13:43&quot; ...</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;  $ Tmin: num  15.9 15.6 15.6 17.4 19.4 17.4 16.4 16.6 15.4 17.4 ...</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt;  $ Tmax: num  18.4 15.9 17.4 19.2 20.4 19.4 17.4 16.4 17.9 18.7 ...</span></span></code></pre></div>
+</div>
+<div id="identify-breeding-period" class="section level2">
+<h2>1.2 - Identify breeding period</h2>
+<p>Since the raw data covers the entire migration route, the dataset
+must be trimmed to the breeding period before processing. This can be
+done either by automatically detecting the period using a corresponding
+twilight file (.twl) or by manually specifying the range.</p>
+<div id="automatic-detection" class="section level3">
+<h3>1.2.1 - Automatic detection</h3>
+<p>If a twilight file is available, the breeding period can be
+automatically detected using the <code>auto = T</code> setting in the
+<code>set_breeding_period</code> function. Twilight files
+(<code>.csv</code>) can be created by functions associated with the
+<em>GeoLight</em> or <em>TwGeos</em> packages. The twilight file needs
+to be put into the <code>RawData</code> folder alongside the light and
+temperature data.</p>
+<p><em>Automatic Approach</em></p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>tm.breeding <span class="ot">&lt;-</span> <span class="fu">set_breeding_period</span>(dir.raw, raw_light, raw_deg, ID, <span class="at">auto =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>tm.breeding</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;        start          end </span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; &quot;2017-05-29&quot; &quot;2017-08-06&quot;</span></span></code></pre></div>
+<p>If no twilight file is available, the breeding period can be manually
+defined using the argument <code>auto = FALSE</code>. In this case, an
+interactive plotting window opens that displays the light profile of the
+selected individual across the entire recording period. Users can
+visually inspect the data to determine when the bird likely arrived at
+and departed from the breeding grounds. These points are typically
+indicated by a stable pattern of high light intensity (continuous
+daylight in the Arctic). To specify the range, simply left-click to set
+the start of the breeding period and right-click to set the end. The
+function then returns the start and end dates of the selected breeding
+period for further processing.</p>
+<p><em>Manual Approach</em></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>tm.breeding <span class="ot">&lt;-</span> <span class="fu">set_breeding_period</span>(dir.raw, raw_light, raw_deg, ID, <span class="at">auto =</span> <span class="cn">FALSE</span>, <span class="at">gr.Device =</span> <span class="st">&quot;x11&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>tm.breeding</span></code></pre></div>
+</div>
+</div>
+</div>
+<div id="preprocessing" class="section level1">
+<h1>2 - Preprocessing</h1>
+<p>To create consistent input for analysing the breeding behaviour using
+a neural network, light and temperature recordings need to be combined
+into uniform time series with the same step size. The final data frame
+thus needs to contain four columns with the following names:</p>
+<ol style="list-style-type: decimal">
+<li>Date</li>
+<li>Light</li>
+<li>Tmin</li>
+<li>Tmax</li>
+</ol>
+<p>Light data provides the reference timeline with the coarsest
+resolution, while temperature data, often only available in a coarser
+resolution, needs to be aligned to it. Missing temperature values are
+interpolated by filling values backward over their original sampling
+intervals so that they match the resolution of the light data.</p>
+<p>All input variables are then normalised to a range of 0–1 to ensure
+comparability. To minimise the influence of extreme outliers, realistic
+value ranges are defined by calculating the 2.5th and 97.5th percentiles
+of each variable (<code>Light</code>, <code>Tmin</code>,
+<code>Tmax</code>) across all preprocessed data.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>breeding_data <span class="ot">&lt;-</span> <span class="fu">preprocessing</span>(ID, raw_light, raw_deg, tm.breeding)</span></code></pre></div>
+</div>
+<div id="model-optional" class="section level1">
+<h1>3 - Model (optional)</h1>
+<p>In this optional section, users can design and train their own
+deep-learning model for classifying breeding behaviour. Alternatively, a
+pre-trained model (based on Ruddy Turnstones) can be loaded directly in
+<code>Chapter 4 – Application</code>. This section allows full
+flexibility to adjust parameters such as the architecture, training,
+window length or class weights.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">library</span>(keras3)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">library</span>(caret)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># Define window length (number of days)</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>segment_days <span class="ot">&lt;-</span> <span class="dv">2</span> </span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co"># Define class weights</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>weight_brooding <span class="ot">&lt;-</span> <span class="fl">2.5</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>weight_incubation <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>weight_random <span class="ot">&lt;-</span> <span class="fl">0.8</span></span></code></pre></div>
+<div id="creating-a-training-dataset" class="section level2">
+<h2>3.1 - Creating a training dataset</h2>
+<p>Before model training, a labelled dataset needs to be created. Users
+can gather data from all available geolocator recordings and manually
+classify representative samples of each behavioural class (brooding,
+incubation, random). The resulting dataset is then split into training
+and test subsets for performance evaluation. The following code
+demonstrates one approach to create and partition such data, but users
+may freely adapt file structures, proportions, or sampling routines.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># gather data from all available geolocator records of your species </span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>breeding_data_list <span class="ot">&lt;-</span> <span class="fu">create_breeding_data_list</span>(dir.raw, <span class="at">segment_days =</span> <span class="dv">1</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co"># Create training data </span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>preclassified_data <span class="ot">&lt;-</span> <span class="fu">create_trainingdata</span>(breeding_data_list,</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>                                          <span class="at">segment_days =</span> <span class="dv">1</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>                                          dir.raw, </span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>                                          <span class="at">gr.Device =</span> <span class="st">&quot;x11&quot;</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co"># Partition preclassified data into training- (80%) and test-data (20%) </span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>classes <span class="ot">&lt;-</span> <span class="fu">sapply</span>(preclassified_data, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;Class&quot;</span>) <span class="co"># extract classes</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>partition <span class="ot">&lt;-</span> caret<span class="sc">::</span><span class="fu">createDataPartition</span>(classes, <span class="at">p =</span> <span class="fl">0.8</span>, <span class="at">list =</span> <span class="cn">FALSE</span>, <span class="at">times =</span> <span class="dv">1</span>) <span class="co"># 80% of each class goes to training, 20% to test data</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>training_data <span class="ot">&lt;-</span> preclassified_data[partition]</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> preclassified_data[<span class="sc">-</span>partition]</span></code></pre></div>
+</div>
+<div id="setting-up-the-costum-model" class="section level2">
+<h2>3.2 - Setting up the costum model</h2>
+<p>If desired, users can define a custom architecture instead of using
+the pre-trained base model. This step includes preparing the previously
+created training data, training and evaluation of the model. Below, we
+provide a template architecture and training procedure that can serve as
+a starting point for model development. Users can modify any component —
+from input features and layer types to kernel sizes, optimisers, or
+training strategy.</p>
+<div id="preparing-data-for-model-training" class="section level3">
+<h3>3.2.1 - Preparing data for model training</h3>
+<p>Input data (Light, Tmin, Tmax) are truncated to equal window lengths
+and combined into 3-channel arrays for model input. You may add or
+remove variables as you wish. #### Entire dataset</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>light_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(breeding_data, <span class="cf">function</span>(x) {</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Light)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>}))</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>tmin_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(breeding_data, <span class="cf">function</span>(x) {</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Tmin)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>}))</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>tmax_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(breeding_data, <span class="cf">function</span>(x) {</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Tmax)</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>}))</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co"># Combine arrays for model input</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>x_breeding <span class="ot">&lt;-</span> abind<span class="sc">::</span><span class="fu">abind</span>(light_truncated, tmin_truncated, tmax_truncated, <span class="at">along =</span> <span class="dv">3</span>) <span class="co"># 3 = number of variables included</span></span></code></pre></div>
+<div id="training-data" class="section level4">
+<h4>Training data</h4>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>light_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(training_data, <span class="cf">function</span>(x) {</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Light)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>}))</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>tmin_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(training_data, <span class="cf">function</span>(x) {</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Tmin)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>}))</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>tmax_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(training_data, <span class="cf">function</span>(x) {</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Tmax)</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>}))</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co"># Combine arrays for model input</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>x_training <span class="ot">&lt;-</span> abind<span class="sc">::</span><span class="fu">abind</span>(light_truncated, tmin_truncated, tmax_truncated, <span class="at">along =</span> <span class="dv">3</span>) <span class="co"># 3 = number of variables included</span></span></code></pre></div>
+</div>
+<div id="test-data" class="section level4">
+<h4>Test data</h4>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>light_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(test_data, <span class="cf">function</span>(x) {</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Light)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>}))</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>tmin_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(test_data, <span class="cf">function</span>(x) {</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Tmin)</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>}))</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>tmax_truncated <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(test_data, <span class="cf">function</span>(x) {</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(x<span class="sc">$</span>Tmax)</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">&gt;=</span> minlen) vals[<span class="dv">1</span><span class="sc">:</span>minlen]</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>}))</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co"># Combine arrays for model input</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>x_test <span class="ot">&lt;-</span> abind<span class="sc">::</span><span class="fu">abind</span>(light_truncated, tmin_truncated, tmax_truncated, <span class="at">along =</span> <span class="dv">3</span>) <span class="co"># 3 = number of variables included</span></span></code></pre></div>
+</div>
+</div>
+<div id="training-using-5-fold-cross-validation" class="section level3">
+<h3>3.2.2 - Training using 5-fold cross-validation</h3>
+<p>The example below outlines a standard 5-fold training routine for
+assessing model robustness. Users can modify the number of folds,
+metrics, or validation strategies as desired. Each fold’s best model is
+stored for later comparison.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>model_name <span class="ot">&lt;-</span> <span class="st">&quot;costum&quot;</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co"># link directory</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>dir.model <span class="ot">&lt;-</span> <span class="fu">file.path</span>(wd, <span class="st">&quot;Model&quot;</span>, model_name)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co"># Create directory inside you data-folder for storing the costum model</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="fu">file.path</span>(dir.model), <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co"># Create k folds</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>train_classes <span class="ot">&lt;-</span> <span class="fu">sapply</span>(training_data, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;Class&quot;</span>) <span class="co"># extract classes</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>train_classes <span class="ot">&lt;-</span> <span class="fu">factor</span>(train_classes, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;brooding&quot;</span>, <span class="st">&quot;incubation&quot;</span>, <span class="st">&quot;random&quot;</span>))</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>folds <span class="ot">&lt;-</span> caret<span class="sc">::</span><span class="fu">createFolds</span>(train_classes, <span class="at">k =</span> <span class="dv">5</span>, <span class="at">returnTrain =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co"># Storage-df for results of each fold</span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>cv_results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>  <span class="at">fold =</span> <span class="fu">integer</span>(),</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a>  <span class="at">val_accuracy =</span> <span class="fu">numeric</span>(),</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>  <span class="at">val_precision =</span> <span class="fu">numeric</span>(),</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>  <span class="at">val_recall =</span> <span class="fu">numeric</span>(),</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a>  <span class="at">val_f1 =</span> <span class="fu">numeric</span>()</span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a>)</span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co"># K-fold cross-validation loop</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">seq_along</span>(folds)) {</span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Processing Fold&quot;</span>, i, <span class="st">&quot;of&quot;</span>, <span class="fu">length</span>(folds), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a>  </span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a>  <span class="co"># Get indices for this fold</span></span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a>  train_idx <span class="ot">&lt;-</span> folds[[i]]</span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a>  val_idx <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">seq_len</span>(<span class="fu">length</span>(training_data)), train_idx)</span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a></span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a>  <span class="co"># Split the data</span></span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a>  x_train_fold <span class="ot">&lt;-</span> x_train[train_idx, , ]</span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a>  x_val_fold <span class="ot">&lt;-</span> x_train[val_idx, , ]</span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a></span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a>  <span class="co"># Prepare labels (one-hot encode)</span></span>
+<span id="cb14-35"><a href="#cb14-35" tabindex="-1"></a>  class_levels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;brooding&quot;</span>, <span class="st">&quot;incubation&quot;</span>, <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb14-36"><a href="#cb14-36" tabindex="-1"></a>  </span>
+<span id="cb14-37"><a href="#cb14-37" tabindex="-1"></a>  <span class="co"># Convert to integer indices (0-based)</span></span>
+<span id="cb14-38"><a href="#cb14-38" tabindex="-1"></a>  y_int_train <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(train_classes[train_idx], <span class="at">levels =</span> class_levels)) <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb14-39"><a href="#cb14-39" tabindex="-1"></a>  y_int_val   <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(train_classes[val_idx],   <span class="at">levels =</span> class_levels)) <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb14-40"><a href="#cb14-40" tabindex="-1"></a>  </span>
+<span id="cb14-41"><a href="#cb14-41" tabindex="-1"></a>  <span class="co"># One-hot encode</span></span>
+<span id="cb14-42"><a href="#cb14-42" tabindex="-1"></a>  y_train_fold <span class="ot">&lt;-</span> <span class="fu">to_categorical</span>(<span class="fu">as.integer</span>(<span class="fu">factor</span>(train_classes[train_idx], <span class="at">levels=</span>class_levels))<span class="sc">-</span><span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb14-43"><a href="#cb14-43" tabindex="-1"></a>                                      <span class="at">num_classes=</span><span class="fu">length</span>(class_levels))</span>
+<span id="cb14-44"><a href="#cb14-44" tabindex="-1"></a>  y_val_fold   <span class="ot">&lt;-</span> <span class="fu">to_categorical</span>(y_int_val, <span class="at">num_classes =</span> <span class="fu">length</span>(class_levels))</span>
+<span id="cb14-45"><a href="#cb14-45" tabindex="-1"></a></span>
+<span id="cb14-46"><a href="#cb14-46" tabindex="-1"></a>  </span>
+<span id="cb14-47"><a href="#cb14-47" tabindex="-1"></a>  <span class="co"># Define the model</span></span>
+<span id="cb14-48"><a href="#cb14-48" tabindex="-1"></a>  inputs <span class="ot">&lt;-</span> <span class="fu">layer_input</span>(<span class="at">shape =</span> <span class="fu">c</span>(window_length, <span class="fu">dim</span>(x_train)[[<span class="dv">3</span>]]))</span>
+<span id="cb14-49"><a href="#cb14-49" tabindex="-1"></a>  outputs <span class="ot">&lt;-</span> inputs <span class="sc">%&gt;%</span></span>
+<span id="cb14-50"><a href="#cb14-50" tabindex="-1"></a>    <span class="fu">layer_conv_1d</span>(<span class="at">filters =</span> <span class="dv">400</span>, <span class="at">kernel_size =</span> <span class="dv">12</span>, <span class="at">activation =</span> <span class="st">&#39;relu&#39;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-51"><a href="#cb14-51" tabindex="-1"></a>    <span class="fu">layer_average_pooling_1d</span>(<span class="at">pool_size =</span> <span class="dv">12</span>, <span class="at">padding =</span> <span class="st">&quot;same&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-52"><a href="#cb14-52" tabindex="-1"></a>    <span class="fu">layer_conv_1d</span>(<span class="at">filters =</span> <span class="dv">288</span>, <span class="at">kernel_size =</span> <span class="dv">16</span>, <span class="at">activation =</span> <span class="st">&#39;relu&#39;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-53"><a href="#cb14-53" tabindex="-1"></a>    <span class="fu">layer_average_pooling_1d</span>(<span class="at">pool_size =</span> <span class="dv">6</span>, <span class="at">padding =</span> <span class="st">&quot;same&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-54"><a href="#cb14-54" tabindex="-1"></a>    <span class="fu">layer_flatten</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb14-55"><a href="#cb14-55" tabindex="-1"></a>    <span class="fu">layer_dropout</span>(<span class="at">rate =</span> <span class="fl">0.2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-56"><a href="#cb14-56" tabindex="-1"></a>    <span class="fu">layer_dense</span>(<span class="at">units =</span> <span class="dv">160</span>, <span class="at">activation =</span> <span class="st">&#39;relu&#39;</span>) <span class="sc">%&gt;%</span> <span class="co">#190 or 128</span></span>
+<span id="cb14-57"><a href="#cb14-57" tabindex="-1"></a>    <span class="fu">layer_dense</span>(<span class="at">units =</span> <span class="fu">ncol</span>(y_train_fold), <span class="at">activation =</span> <span class="st">&#39;softmax&#39;</span>)</span>
+<span id="cb14-58"><a href="#cb14-58" tabindex="-1"></a>  model <span class="ot">&lt;-</span> <span class="fu">keras_model</span>(<span class="at">inputs =</span> inputs,</span>
+<span id="cb14-59"><a href="#cb14-59" tabindex="-1"></a>                       <span class="at">outputs =</span> outputs)</span>
+<span id="cb14-60"><a href="#cb14-60" tabindex="-1"></a></span>
+<span id="cb14-61"><a href="#cb14-61" tabindex="-1"></a>  <span class="co"># Compile the model</span></span>
+<span id="cb14-62"><a href="#cb14-62" tabindex="-1"></a>  model <span class="sc">%&gt;%</span> <span class="fu">compile</span>(</span>
+<span id="cb14-63"><a href="#cb14-63" tabindex="-1"></a>    <span class="at">loss =</span> <span class="st">&#39;categorical_crossentropy&#39;</span>,</span>
+<span id="cb14-64"><a href="#cb14-64" tabindex="-1"></a>    <span class="at">optimizer =</span> <span class="fu">optimizer_adam</span>(</span>
+<span id="cb14-65"><a href="#cb14-65" tabindex="-1"></a>      <span class="at">learning_rate =</span> <span class="fl">0.001</span>,</span>
+<span id="cb14-66"><a href="#cb14-66" tabindex="-1"></a>      <span class="at">beta_1 =</span> <span class="fl">0.9</span>,</span>
+<span id="cb14-67"><a href="#cb14-67" tabindex="-1"></a>      <span class="at">beta_2 =</span> <span class="fl">0.999</span>,</span>
+<span id="cb14-68"><a href="#cb14-68" tabindex="-1"></a>      <span class="at">epsilon =</span> <span class="fl">1e-7</span></span>
+<span id="cb14-69"><a href="#cb14-69" tabindex="-1"></a>    ),</span>
+<span id="cb14-70"><a href="#cb14-70" tabindex="-1"></a>    <span class="at">metrics =</span> <span class="fu">c</span>(<span class="st">&#39;categorical_accuracy&#39;</span>, <span class="st">&#39;Precision&#39;</span>, <span class="st">&#39;Recall&#39;</span>)</span>
+<span id="cb14-71"><a href="#cb14-71" tabindex="-1"></a>  )</span>
+<span id="cb14-72"><a href="#cb14-72" tabindex="-1"></a></span>
+<span id="cb14-73"><a href="#cb14-73" tabindex="-1"></a>  <span class="co"># Train model</span></span>
+<span id="cb14-74"><a href="#cb14-74" tabindex="-1"></a>  history <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> keras3<span class="sc">::</span><span class="fu">fit</span>(</span>
+<span id="cb14-75"><a href="#cb14-75" tabindex="-1"></a>    x_train_fold, y_train_fold,</span>
+<span id="cb14-76"><a href="#cb14-76" tabindex="-1"></a>    <span class="at">validation_data =</span> <span class="fu">list</span>(x_val_fold, y_val_fold),</span>
+<span id="cb14-77"><a href="#cb14-77" tabindex="-1"></a>    <span class="at">epochs =</span> <span class="dv">50</span>,</span>
+<span id="cb14-78"><a href="#cb14-78" tabindex="-1"></a>    <span class="at">batch_size =</span> <span class="dv">32</span>,</span>
+<span id="cb14-79"><a href="#cb14-79" tabindex="-1"></a>    <span class="at">verbose =</span> <span class="dv">0</span>,</span>
+<span id="cb14-80"><a href="#cb14-80" tabindex="-1"></a>    <span class="at">class_weight =</span> <span class="fu">list</span>(<span class="st">`</span><span class="at">0</span><span class="st">`</span> <span class="ot">=</span> weight_brooding,    <span class="co"># brooding</span></span>
+<span id="cb14-81"><a href="#cb14-81" tabindex="-1"></a>                        <span class="st">`</span><span class="at">1</span><span class="st">`</span> <span class="ot">=</span> weight_incubation,  <span class="co"># incubation</span></span>
+<span id="cb14-82"><a href="#cb14-82" tabindex="-1"></a>                        <span class="st">`</span><span class="at">2</span><span class="st">`</span> <span class="ot">=</span> weight_random),     <span class="co"># random</span></span>
+<span id="cb14-83"><a href="#cb14-83" tabindex="-1"></a>    <span class="at">callbacks =</span> <span class="fu">list</span>(</span>
+<span id="cb14-84"><a href="#cb14-84" tabindex="-1"></a>      <span class="fu">callback_early_stopping</span>(<span class="at">monitor =</span> <span class="st">&quot;val_loss&quot;</span>, <span class="at">patience =</span> <span class="dv">8</span>, <span class="at">restore_best_weights =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb14-85"><a href="#cb14-85" tabindex="-1"></a>      <span class="fu">callback_reduce_lr_on_plateau</span>(<span class="at">monitor =</span> <span class="st">&quot;val_loss&quot;</span>, <span class="at">factor =</span> <span class="fl">0.5</span>, <span class="at">patience =</span> <span class="dv">4</span>, <span class="at">min_lr =</span> <span class="fl">1e-6</span>),</span>
+<span id="cb14-86"><a href="#cb14-86" tabindex="-1"></a>      <span class="fu">callback_model_checkpoint</span>(<span class="at">filepath =</span> <span class="fu">file.path</span>(dir.model, <span class="fu">paste0</span>(<span class="st">&quot;cv_fold_&quot;</span>, i, <span class="st">&quot;.keras&quot;</span>)), <span class="at">save_best_only =</span> <span class="cn">TRUE</span>, <span class="at">monitor =</span> <span class="st">&quot;val_loss&quot;</span>)</span>
+<span id="cb14-87"><a href="#cb14-87" tabindex="-1"></a>      )</span>
+<span id="cb14-88"><a href="#cb14-88" tabindex="-1"></a>  )</span>
+<span id="cb14-89"><a href="#cb14-89" tabindex="-1"></a>  </span>
+<span id="cb14-90"><a href="#cb14-90" tabindex="-1"></a>  <span class="co"># Evaluate on validation fold</span></span>
+<span id="cb14-91"><a href="#cb14-91" tabindex="-1"></a>  val_metrics <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">evaluate</span>(x_val_fold, y_val_fold, <span class="at">verbose=</span><span class="dv">0</span>)</span>
+<span id="cb14-92"><a href="#cb14-92" tabindex="-1"></a></span>
+<span id="cb14-93"><a href="#cb14-93" tabindex="-1"></a>  val_accuracy  <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(val_metrics[<span class="st">&quot;categorical_accuracy&quot;</span>])</span>
+<span id="cb14-94"><a href="#cb14-94" tabindex="-1"></a>  val_precision <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(val_metrics[<span class="st">&quot;Precision&quot;</span>])</span>
+<span id="cb14-95"><a href="#cb14-95" tabindex="-1"></a>  val_recall    <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(val_metrics[<span class="st">&quot;Recall&quot;</span>])</span>
+<span id="cb14-96"><a href="#cb14-96" tabindex="-1"></a>  val_f1 <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> (val_precision <span class="sc">*</span> val_recall) <span class="sc">/</span> (val_precision <span class="sc">+</span> val_recall)</span>
+<span id="cb14-97"><a href="#cb14-97" tabindex="-1"></a>  cv_results <span class="ot">&lt;-</span> <span class="fu">rbind</span>(cv_results, <span class="fu">data.frame</span>(<span class="at">fold=</span>i,</span>
+<span id="cb14-98"><a href="#cb14-98" tabindex="-1"></a>                                             val_accuracy,</span>
+<span id="cb14-99"><a href="#cb14-99" tabindex="-1"></a>                                             val_precision,</span>
+<span id="cb14-100"><a href="#cb14-100" tabindex="-1"></a>                                             val_recall,</span>
+<span id="cb14-101"><a href="#cb14-101" tabindex="-1"></a>                                             val_f1))</span>
+<span id="cb14-102"><a href="#cb14-102" tabindex="-1"></a></span>
+<span id="cb14-103"><a href="#cb14-103" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Fold&quot;</span>, i, <span class="st">&quot;- Val F1:&quot;</span>, <span class="fu">round</span>(cv_results<span class="sc">$</span>val_f1[<span class="fu">nrow</span>(cv_results)], <span class="dv">2</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-104"><a href="#cb14-104" tabindex="-1"></a>  keras3<span class="sc">::</span><span class="fu">clear_session</span>() <span class="co"># clear between folds</span></span>
+<span id="cb14-105"><a href="#cb14-105" tabindex="-1"></a>}</span>
+<span id="cb14-106"><a href="#cb14-106" tabindex="-1"></a></span>
+<span id="cb14-107"><a href="#cb14-107" tabindex="-1"></a><span class="co"># Summary of cross-validation results</span></span>
+<span id="cb14-108"><a href="#cb14-108" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">=== Cross-Validation Results ===</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-109"><a href="#cb14-109" tabindex="-1"></a><span class="fu">print</span>(cv_results)</span>
+<span id="cb14-110"><a href="#cb14-110" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Mean Validation F1:&quot;</span>, <span class="fu">round</span>(<span class="fu">mean</span>(cv_results<span class="sc">$</span>val_f1, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="dv">4</span>), <span class="st">&quot;±&quot;</span>, <span class="fu">round</span>(<span class="fu">sd</span>(cv_results<span class="sc">$</span>val_f1, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="dv">4</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-111"><a href="#cb14-111" tabindex="-1"></a><span class="co"># Precision &amp; Recall = averages over all classes</span></span>
+<span id="cb14-112"><a href="#cb14-112" tabindex="-1"></a></span>
+<span id="cb14-113"><a href="#cb14-113" tabindex="-1"></a><span class="co"># Examine CV results for stability and performance</span></span>
+<span id="cb14-114"><a href="#cb14-114" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;CV Performance Summary:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-115"><a href="#cb14-115" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(cv_results))</span>
+<span id="cb14-116"><a href="#cb14-116" tabindex="-1"></a></span>
+<span id="cb14-117"><a href="#cb14-117" tabindex="-1"></a><span class="co"># Check for high variance across folds (indicates instability)</span></span>
+<span id="cb14-118"><a href="#cb14-118" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">sd</span>(cv_results<span class="sc">$</span>val_accuracy) <span class="sc">&gt;</span> <span class="fl">0.1</span>) {</span>
+<span id="cb14-119"><a href="#cb14-119" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Warning: High variance across folds. Consider:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-120"><a href="#cb14-120" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;- More data</span><span class="sc">\n</span><span class="st">- Different architecture</span><span class="sc">\n</span><span class="st">- Better regularization</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-121"><a href="#cb14-121" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="final-training-on-full-training-dataset" class="section level3">
+<h3>3.2.3 - Final training on full training dataset</h3>
+<p>Once the best architecture and configuration is identified, the model
+can be retrained on the entire training dataset to obtain a final
+model.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># indicate file path for final model</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>path_final_model <span class="ot">&lt;-</span> <span class="fu">file.path</span>(dir.model, <span class="st">&quot;final_model.keras&quot;</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co"># Convert labels to numeric and one-hot encode</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>classes_training <span class="ot">&lt;-</span> <span class="fu">sapply</span>(training_data, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;Class&quot;</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>y_train <span class="ot">&lt;-</span> <span class="fu">to_categorical</span>(<span class="fu">as.numeric</span>(<span class="fu">factor</span>(classes_training)) <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co"># Load the best performing model from Cross-Validation</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>model <span class="ot">&lt;-</span> keras3<span class="sc">::</span><span class="fu">load_model</span>(<span class="fu">file.path</span>(dir.model, <span class="fu">paste0</span>(<span class="st">&quot;cv_fold_&quot;</span>, cv_results<span class="sc">$</span>fold[<span class="fu">which.max</span>(cv_results<span class="sc">$</span>val_f1)], <span class="st">&quot;.keras&quot;</span>)))</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="fu">summary</span>(model)</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co"># Compile the model</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>model <span class="sc">%&gt;%</span> <span class="fu">compile</span>(</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>  <span class="at">loss =</span> <span class="st">&#39;categorical_crossentropy&#39;</span>,</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>  <span class="at">optimizer =</span> <span class="fu">optimizer_adam</span>(</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>    <span class="at">learning_rate =</span> <span class="fl">0.001</span>,</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a>    <span class="at">beta_1 =</span> <span class="fl">0.9</span>,</span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a>    <span class="at">beta_2 =</span> <span class="fl">0.999</span>,</span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a>    <span class="at">epsilon =</span> <span class="fl">1e-7</span>),</span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a>  <span class="at">metrics =</span> <span class="fu">c</span>(<span class="st">&#39;categorical_accuracy&#39;</span>, <span class="st">&#39;Precision&#39;</span>, <span class="st">&#39;Recall&#39;</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a>  )</span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a>history <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> keras3<span class="sc">::</span><span class="fu">fit</span>(</span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a>  x_train, y_train,</span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a>  <span class="at">epochs =</span> <span class="dv">50</span>,</span>
+<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a>  <span class="at">batch_size =</span> <span class="dv">64</span>,</span>
+<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a>  <span class="at">class_weight =</span> <span class="fu">list</span>(<span class="st">`</span><span class="at">0</span><span class="st">`</span> <span class="ot">=</span> weight_brooding,   <span class="co"># brooding</span></span>
+<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a>                    <span class="st">`</span><span class="at">1</span><span class="st">`</span> <span class="ot">=</span> weight_incubation,   <span class="co"># incubation</span></span>
+<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a>                    <span class="st">`</span><span class="at">2</span><span class="st">`</span> <span class="ot">=</span> weight_random),      <span class="co"># random</span></span>
+<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a>  <span class="at">callbacks =</span> <span class="fu">list</span>(</span>
+<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a>      <span class="fu">callback_early_stopping</span>(<span class="at">monitor =</span> <span class="st">&quot;loss&quot;</span>, <span class="at">patience =</span> <span class="dv">3</span>, <span class="at">restore_best_weights =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a>      <span class="fu">callback_reduce_lr_on_plateau</span>(<span class="at">monitor =</span> <span class="st">&quot;loss&quot;</span>, <span class="at">factor =</span> <span class="fl">0.5</span>, <span class="at">patience =</span> <span class="dv">4</span>, <span class="at">min_lr =</span> <span class="fl">1e-4</span>),</span>
+<span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a>      <span class="fu">callback_model_checkpoint</span>(<span class="at">filepath =</span> path_final_model, <span class="at">save_best_only =</span> <span class="cn">TRUE</span>, <span class="at">monitor =</span> <span class="st">&quot;loss&quot;</span>)    </span>
+<span id="cb15-33"><a href="#cb15-33" tabindex="-1"></a>  )</span>
+<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+<div id="evaluating-the-model-performance-on-test-data" class="section level2">
+<h2>3.2.4 - Evaluating the model performance on test data</h2>
+<p>The final model can be validated against the previously created,
+held-out test set to evaluate the overall model performance.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Make predictions on test set</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>classes_test <span class="ot">&lt;-</span> <span class="fu">sapply</span>(test_data, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;Class&quot;</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>y_test <span class="ot">&lt;-</span> <span class="fu">to_categorical</span>(<span class="fu">as.numeric</span>(<span class="fu">factor</span>(classes_test)) <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>test_predictions <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">predict</span>(x_test)</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>test_metrics <span class="ot">&lt;-</span> model <span class="sc">%&gt;%</span> <span class="fu">evaluate</span>(x_test, y_test)</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="co"># Detailed evaluation</span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>pred_classes <span class="ot">&lt;-</span> <span class="fu">apply</span>(test_predictions, <span class="dv">1</span>, which.max) <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>true_classes <span class="ot">&lt;-</span> <span class="fu">apply</span>(y_test, <span class="dv">1</span>, which.max) <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a><span class="co"># Confusion matrix</span></span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>cm <span class="ot">&lt;-</span> <span class="fu">confusionMatrix</span>(</span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>  <span class="fu">factor</span>(pred_classes, <span class="at">levels =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&quot;brooding&quot;</span>, <span class="st">&quot;incubation&quot;</span>, <span class="st">&quot;random&quot;</span>)),</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>  <span class="fu">factor</span>(true_classes, <span class="at">levels =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&quot;brooding&quot;</span>, <span class="st">&quot;incubation&quot;</span>, <span class="st">&quot;random&quot;</span>))</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+<div id="application" class="section level1">
+<h1>4 - Application</h1>
+<p>When there is no need for training or setting up a new model, the
+pre-trained base model can be directly applied to the preprocessed data.
+The base model was built using one-day windows of Ruddy Turnstone data.
+Input data thus also needs to be in the same resolution. The function
+<code>classify_breeding_behaviour</code> takes the preprocessed dataset
+and its associated metadata as input and returns a list containing the
+predicted probabilities for each breeding behaviour state (brooding,
+incubation, random) across all time windows.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>classified_breeding <span class="ot">&lt;-</span> <span class="fu">classify_breeding_behaviour</span>(breeding_data)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="co">#&gt; 3/3 - 0s - 31ms/step</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>classified_breeding</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co">#&gt;       ID Year Window       Date     brooding   incubation       random</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="co">#&gt; 1  BB959 2017      1 2017-05-29 1.189713e-18 1.403540e-21 1.000000e+00</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="co">#&gt; 2  BB959 2017      2 2017-05-30 2.862772e-07 4.531353e-11 9.999998e-01</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co">#&gt; 3  BB959 2017      3 2017-05-31 1.020000e-07 9.004018e-13 9.999999e-01</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co">#&gt; 4  BB959 2017      4 2017-06-01 1.525468e-13 4.959805e-14 1.000000e+00</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="co">#&gt; 5  BB959 2017      5 2017-06-02 6.261136e-04 4.638346e-08 9.993738e-01</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co">#&gt; 6  BB959 2017      6 2017-06-03 6.423383e-12 4.703686e-13 1.000000e+00</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co">#&gt; 7  BB959 2017      7 2017-06-04 8.026202e-09 1.015435e-13 1.000000e+00</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="co">#&gt; 8  BB959 2017      8 2017-06-05 3.148921e-31 5.869868e-31 1.000000e+00</span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a><span class="co">#&gt; 9  BB959 2017      9 2017-06-06 6.969204e-16 3.977704e-19 1.000000e+00</span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="co">#&gt; 10 BB959 2017     10 2017-06-07 2.044331e-26 1.262272e-24 1.000000e+00</span></span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a><span class="co">#&gt; 11 BB959 2017     11 2017-06-08 4.962462e-05 2.565222e-07 9.999502e-01</span></span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a><span class="co">#&gt; 12 BB959 2017     12 2017-06-09 3.732075e-20 4.720565e-17 1.000000e+00</span></span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a><span class="co">#&gt; 13 BB959 2017     13 2017-06-10 1.629047e-11 8.959502e-15 1.000000e+00</span></span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a><span class="co">#&gt; 14 BB959 2017     14 2017-06-11 2.601891e-05 3.357772e-07 9.999737e-01</span></span>
+<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a><span class="co">#&gt; 15 BB959 2017     15 2017-06-12 8.205839e-01 6.545032e-04 1.787615e-01</span></span>
+<span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a><span class="co">#&gt; 16 BB959 2017     16 2017-06-13 1.891688e-04 6.173394e-08 9.998107e-01</span></span>
+<span id="cb17-21"><a href="#cb17-21" tabindex="-1"></a><span class="co">#&gt; 17 BB959 2017     17 2017-06-14 4.142600e-02 1.053048e-05 9.585634e-01</span></span>
+<span id="cb17-22"><a href="#cb17-22" tabindex="-1"></a><span class="co">#&gt; 18 BB959 2017     18 2017-06-15 8.322417e-01 3.714389e-02 1.306145e-01</span></span>
+<span id="cb17-23"><a href="#cb17-23" tabindex="-1"></a><span class="co">#&gt; 19 BB959 2017     19 2017-06-16 9.392682e-01 5.573353e-04 6.017441e-02</span></span>
+<span id="cb17-24"><a href="#cb17-24" tabindex="-1"></a><span class="co">#&gt; 20 BB959 2017     20 2017-06-17 6.121522e-03 9.938751e-01 3.350821e-06</span></span>
+<span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a><span class="co">#&gt; 21 BB959 2017     21 2017-06-18 4.302718e-05 9.999570e-01 1.214960e-10</span></span>
+<span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a><span class="co">#&gt; 22 BB959 2017     22 2017-06-19 2.815171e-04 9.997182e-01 2.050663e-07</span></span>
+<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a><span class="co">#&gt; 23 BB959 2017     23 2017-06-20 2.885652e-05 9.999712e-01 2.960163e-09</span></span>
+<span id="cb17-28"><a href="#cb17-28" tabindex="-1"></a><span class="co">#&gt; 24 BB959 2017     24 2017-06-21 1.380909e-03 9.986191e-01 5.064078e-08</span></span>
+<span id="cb17-29"><a href="#cb17-29" tabindex="-1"></a><span class="co">#&gt; 25 BB959 2017     25 2017-06-22 2.412218e-05 9.999757e-01 2.642205e-07</span></span>
+<span id="cb17-30"><a href="#cb17-30" tabindex="-1"></a><span class="co">#&gt; 26 BB959 2017     26 2017-06-23 7.232228e-28 1.000000e+00 4.722541e-19</span></span>
+<span id="cb17-31"><a href="#cb17-31" tabindex="-1"></a><span class="co">#&gt; 27 BB959 2017     27 2017-06-24 1.686635e-23 1.000000e+00 1.847895e-17</span></span>
+<span id="cb17-32"><a href="#cb17-32" tabindex="-1"></a><span class="co">#&gt; 28 BB959 2017     28 2017-06-25 1.110987e-28 1.000000e+00 8.862509e-14</span></span>
+<span id="cb17-33"><a href="#cb17-33" tabindex="-1"></a><span class="co">#&gt; 29 BB959 2017     29 2017-06-26 1.597954e-29 1.000000e+00 2.039789e-27</span></span>
+<span id="cb17-34"><a href="#cb17-34" tabindex="-1"></a><span class="co">#&gt; 30 BB959 2017     30 2017-06-27 8.780547e-30 1.000000e+00 9.257129e-25</span></span>
+<span id="cb17-35"><a href="#cb17-35" tabindex="-1"></a><span class="co">#&gt; 31 BB959 2017     31 2017-06-28 2.020256e-30 1.000000e+00 8.296859e-19</span></span>
+<span id="cb17-36"><a href="#cb17-36" tabindex="-1"></a><span class="co">#&gt; 32 BB959 2017     32 2017-06-29 4.679566e-30 1.000000e+00 1.173174e-17</span></span>
+<span id="cb17-37"><a href="#cb17-37" tabindex="-1"></a><span class="co">#&gt; 33 BB959 2017     33 2017-06-30 1.235561e-30 1.000000e+00 3.313165e-20</span></span>
+<span id="cb17-38"><a href="#cb17-38" tabindex="-1"></a><span class="co">#&gt; 34 BB959 2017     34 2017-07-01 2.273430e-14 1.000000e+00 1.271759e-10</span></span>
+<span id="cb17-39"><a href="#cb17-39" tabindex="-1"></a><span class="co">#&gt; 35 BB959 2017     35 2017-07-02 6.672342e-04 9.887630e-01 1.056978e-02</span></span>
+<span id="cb17-40"><a href="#cb17-40" tabindex="-1"></a><span class="co">#&gt; 36 BB959 2017     36 2017-07-03 1.447003e-24 1.000000e+00 1.971092e-17</span></span>
+<span id="cb17-41"><a href="#cb17-41" tabindex="-1"></a><span class="co">#&gt; 37 BB959 2017     37 2017-07-04 1.459227e-30 1.000000e+00 2.870224e-30</span></span>
+<span id="cb17-42"><a href="#cb17-42" tabindex="-1"></a><span class="co">#&gt; 38 BB959 2017     38 2017-07-05 1.813588e-28 1.000000e+00 5.247088e-29</span></span>
+<span id="cb17-43"><a href="#cb17-43" tabindex="-1"></a><span class="co">#&gt; 39 BB959 2017     39 2017-07-06 5.644904e-26 1.000000e+00 2.274892e-25</span></span>
+<span id="cb17-44"><a href="#cb17-44" tabindex="-1"></a><span class="co">#&gt; 40 BB959 2017     40 2017-07-07 0.000000e+00 1.000000e+00 5.063210e-32</span></span>
+<span id="cb17-45"><a href="#cb17-45" tabindex="-1"></a><span class="co">#&gt; 41 BB959 2017     41 2017-07-08 5.825133e-27 1.000000e+00 7.175849e-17</span></span>
+<span id="cb17-46"><a href="#cb17-46" tabindex="-1"></a><span class="co">#&gt; 42 BB959 2017     42 2017-07-09 5.259914e-29 1.000000e+00 2.424740e-20</span></span>
+<span id="cb17-47"><a href="#cb17-47" tabindex="-1"></a><span class="co">#&gt; 43 BB959 2017     43 2017-07-10 3.661302e-03 9.963297e-01 8.993498e-06</span></span>
+<span id="cb17-48"><a href="#cb17-48" tabindex="-1"></a><span class="co">#&gt; 44 BB959 2017     44 2017-07-11 9.204554e-01 2.710372e-03 7.683424e-02</span></span>
+<span id="cb17-49"><a href="#cb17-49" tabindex="-1"></a><span class="co">#&gt; 45 BB959 2017     45 2017-07-12 2.471790e-01 1.344568e-01 6.183642e-01</span></span>
+<span id="cb17-50"><a href="#cb17-50" tabindex="-1"></a><span class="co">#&gt; 46 BB959 2017     46 2017-07-13 9.791288e-01 4.611947e-03 1.625923e-02</span></span>
+<span id="cb17-51"><a href="#cb17-51" tabindex="-1"></a><span class="co">#&gt; 47 BB959 2017     47 2017-07-14 9.483776e-01 3.690924e-03 4.793141e-02</span></span>
+<span id="cb17-52"><a href="#cb17-52" tabindex="-1"></a><span class="co">#&gt; 48 BB959 2017     48 2017-07-15 9.651414e-01 2.946307e-02 5.395423e-03</span></span>
+<span id="cb17-53"><a href="#cb17-53" tabindex="-1"></a><span class="co">#&gt; 49 BB959 2017     49 2017-07-16 9.890353e-01 5.928925e-03 5.035759e-03</span></span>
+<span id="cb17-54"><a href="#cb17-54" tabindex="-1"></a><span class="co">#&gt; 50 BB959 2017     50 2017-07-17 9.982206e-01 4.496679e-04 1.329744e-03</span></span>
+<span id="cb17-55"><a href="#cb17-55" tabindex="-1"></a><span class="co">#&gt; 51 BB959 2017     51 2017-07-18 8.858148e-01 5.912135e-04 1.135939e-01</span></span>
+<span id="cb17-56"><a href="#cb17-56" tabindex="-1"></a><span class="co">#&gt; 52 BB959 2017     52 2017-07-19 8.485628e-02 3.313861e-03 9.118299e-01</span></span>
+<span id="cb17-57"><a href="#cb17-57" tabindex="-1"></a><span class="co">#&gt; 53 BB959 2017     53 2017-07-20 1.193710e-03 5.645035e-04 9.982418e-01</span></span>
+<span id="cb17-58"><a href="#cb17-58" tabindex="-1"></a><span class="co">#&gt; 54 BB959 2017     54 2017-07-21 1.038176e-02 1.174629e-04 9.895008e-01</span></span>
+<span id="cb17-59"><a href="#cb17-59" tabindex="-1"></a><span class="co">#&gt; 55 BB959 2017     55 2017-07-22 7.048251e-02 1.070573e-02 9.188117e-01</span></span>
+<span id="cb17-60"><a href="#cb17-60" tabindex="-1"></a><span class="co">#&gt; 56 BB959 2017     56 2017-07-23 5.483703e-03 1.669860e-05 9.944996e-01</span></span>
+<span id="cb17-61"><a href="#cb17-61" tabindex="-1"></a><span class="co">#&gt; 57 BB959 2017     57 2017-07-24 1.631068e-02 6.923766e-01 2.913128e-01</span></span>
+<span id="cb17-62"><a href="#cb17-62" tabindex="-1"></a><span class="co">#&gt; 58 BB959 2017     58 2017-07-25 8.308229e-01 2.606815e-03 1.665703e-01</span></span>
+<span id="cb17-63"><a href="#cb17-63" tabindex="-1"></a><span class="co">#&gt; 59 BB959 2017     59 2017-07-26 1.187158e-01 1.254960e-01 7.557882e-01</span></span>
+<span id="cb17-64"><a href="#cb17-64" tabindex="-1"></a><span class="co">#&gt; 60 BB959 2017     60 2017-07-27 3.028684e-02 3.674553e-06 9.697095e-01</span></span>
+<span id="cb17-65"><a href="#cb17-65" tabindex="-1"></a><span class="co">#&gt; 61 BB959 2017     61 2017-07-28 9.649209e-12 1.877729e-13 1.000000e+00</span></span>
+<span id="cb17-66"><a href="#cb17-66" tabindex="-1"></a><span class="co">#&gt; 62 BB959 2017     62 2017-07-29 1.112589e-03 1.313195e-05 9.988742e-01</span></span>
+<span id="cb17-67"><a href="#cb17-67" tabindex="-1"></a><span class="co">#&gt; 63 BB959 2017     63 2017-07-30 2.917856e-10 3.098885e-08 1.000000e+00</span></span>
+<span id="cb17-68"><a href="#cb17-68" tabindex="-1"></a><span class="co">#&gt; 64 BB959 2017     64 2017-07-31 3.122584e-06 1.843982e-08 9.999969e-01</span></span>
+<span id="cb17-69"><a href="#cb17-69" tabindex="-1"></a><span class="co">#&gt; 65 BB959 2017     65 2017-08-01 3.779733e-04 1.749969e-08 9.996220e-01</span></span>
+<span id="cb17-70"><a href="#cb17-70" tabindex="-1"></a><span class="co">#&gt; 66 BB959 2017     66 2017-08-02 5.938844e-06 2.903414e-07 9.999938e-01</span></span>
+<span id="cb17-71"><a href="#cb17-71" tabindex="-1"></a><span class="co">#&gt; 67 BB959 2017     67 2017-08-03 2.422716e-08 2.260705e-13 1.000000e+00</span></span>
+<span id="cb17-72"><a href="#cb17-72" tabindex="-1"></a><span class="co">#&gt; 68 BB959 2017     68 2017-08-04 3.133170e-09 4.579456e-14 1.000000e+00</span></span>
+<span id="cb17-73"><a href="#cb17-73" tabindex="-1"></a><span class="co">#&gt; 69 BB959 2017     69 2017-08-05 2.163666e-09 5.271094e-10 1.000000e+00</span></span>
+<span id="cb17-74"><a href="#cb17-74" tabindex="-1"></a><span class="co">#&gt;         Class</span></span>
+<span id="cb17-75"><a href="#cb17-75" tabindex="-1"></a><span class="co">#&gt; 1      random</span></span>
+<span id="cb17-76"><a href="#cb17-76" tabindex="-1"></a><span class="co">#&gt; 2      random</span></span>
+<span id="cb17-77"><a href="#cb17-77" tabindex="-1"></a><span class="co">#&gt; 3      random</span></span>
+<span id="cb17-78"><a href="#cb17-78" tabindex="-1"></a><span class="co">#&gt; 4      random</span></span>
+<span id="cb17-79"><a href="#cb17-79" tabindex="-1"></a><span class="co">#&gt; 5      random</span></span>
+<span id="cb17-80"><a href="#cb17-80" tabindex="-1"></a><span class="co">#&gt; 6      random</span></span>
+<span id="cb17-81"><a href="#cb17-81" tabindex="-1"></a><span class="co">#&gt; 7      random</span></span>
+<span id="cb17-82"><a href="#cb17-82" tabindex="-1"></a><span class="co">#&gt; 8      random</span></span>
+<span id="cb17-83"><a href="#cb17-83" tabindex="-1"></a><span class="co">#&gt; 9      random</span></span>
+<span id="cb17-84"><a href="#cb17-84" tabindex="-1"></a><span class="co">#&gt; 10     random</span></span>
+<span id="cb17-85"><a href="#cb17-85" tabindex="-1"></a><span class="co">#&gt; 11     random</span></span>
+<span id="cb17-86"><a href="#cb17-86" tabindex="-1"></a><span class="co">#&gt; 12     random</span></span>
+<span id="cb17-87"><a href="#cb17-87" tabindex="-1"></a><span class="co">#&gt; 13     random</span></span>
+<span id="cb17-88"><a href="#cb17-88" tabindex="-1"></a><span class="co">#&gt; 14     random</span></span>
+<span id="cb17-89"><a href="#cb17-89" tabindex="-1"></a><span class="co">#&gt; 15   brooding</span></span>
+<span id="cb17-90"><a href="#cb17-90" tabindex="-1"></a><span class="co">#&gt; 16     random</span></span>
+<span id="cb17-91"><a href="#cb17-91" tabindex="-1"></a><span class="co">#&gt; 17     random</span></span>
+<span id="cb17-92"><a href="#cb17-92" tabindex="-1"></a><span class="co">#&gt; 18   brooding</span></span>
+<span id="cb17-93"><a href="#cb17-93" tabindex="-1"></a><span class="co">#&gt; 19   brooding</span></span>
+<span id="cb17-94"><a href="#cb17-94" tabindex="-1"></a><span class="co">#&gt; 20 incubation</span></span>
+<span id="cb17-95"><a href="#cb17-95" tabindex="-1"></a><span class="co">#&gt; 21 incubation</span></span>
+<span id="cb17-96"><a href="#cb17-96" tabindex="-1"></a><span class="co">#&gt; 22 incubation</span></span>
+<span id="cb17-97"><a href="#cb17-97" tabindex="-1"></a><span class="co">#&gt; 23 incubation</span></span>
+<span id="cb17-98"><a href="#cb17-98" tabindex="-1"></a><span class="co">#&gt; 24 incubation</span></span>
+<span id="cb17-99"><a href="#cb17-99" tabindex="-1"></a><span class="co">#&gt; 25 incubation</span></span>
+<span id="cb17-100"><a href="#cb17-100" tabindex="-1"></a><span class="co">#&gt; 26 incubation</span></span>
+<span id="cb17-101"><a href="#cb17-101" tabindex="-1"></a><span class="co">#&gt; 27 incubation</span></span>
+<span id="cb17-102"><a href="#cb17-102" tabindex="-1"></a><span class="co">#&gt; 28 incubation</span></span>
+<span id="cb17-103"><a href="#cb17-103" tabindex="-1"></a><span class="co">#&gt; 29 incubation</span></span>
+<span id="cb17-104"><a href="#cb17-104" tabindex="-1"></a><span class="co">#&gt; 30 incubation</span></span>
+<span id="cb17-105"><a href="#cb17-105" tabindex="-1"></a><span class="co">#&gt; 31 incubation</span></span>
+<span id="cb17-106"><a href="#cb17-106" tabindex="-1"></a><span class="co">#&gt; 32 incubation</span></span>
+<span id="cb17-107"><a href="#cb17-107" tabindex="-1"></a><span class="co">#&gt; 33 incubation</span></span>
+<span id="cb17-108"><a href="#cb17-108" tabindex="-1"></a><span class="co">#&gt; 34 incubation</span></span>
+<span id="cb17-109"><a href="#cb17-109" tabindex="-1"></a><span class="co">#&gt; 35 incubation</span></span>
+<span id="cb17-110"><a href="#cb17-110" tabindex="-1"></a><span class="co">#&gt; 36 incubation</span></span>
+<span id="cb17-111"><a href="#cb17-111" tabindex="-1"></a><span class="co">#&gt; 37 incubation</span></span>
+<span id="cb17-112"><a href="#cb17-112" tabindex="-1"></a><span class="co">#&gt; 38 incubation</span></span>
+<span id="cb17-113"><a href="#cb17-113" tabindex="-1"></a><span class="co">#&gt; 39 incubation</span></span>
+<span id="cb17-114"><a href="#cb17-114" tabindex="-1"></a><span class="co">#&gt; 40 incubation</span></span>
+<span id="cb17-115"><a href="#cb17-115" tabindex="-1"></a><span class="co">#&gt; 41 incubation</span></span>
+<span id="cb17-116"><a href="#cb17-116" tabindex="-1"></a><span class="co">#&gt; 42 incubation</span></span>
+<span id="cb17-117"><a href="#cb17-117" tabindex="-1"></a><span class="co">#&gt; 43 incubation</span></span>
+<span id="cb17-118"><a href="#cb17-118" tabindex="-1"></a><span class="co">#&gt; 44   brooding</span></span>
+<span id="cb17-119"><a href="#cb17-119" tabindex="-1"></a><span class="co">#&gt; 45     random</span></span>
+<span id="cb17-120"><a href="#cb17-120" tabindex="-1"></a><span class="co">#&gt; 46   brooding</span></span>
+<span id="cb17-121"><a href="#cb17-121" tabindex="-1"></a><span class="co">#&gt; 47   brooding</span></span>
+<span id="cb17-122"><a href="#cb17-122" tabindex="-1"></a><span class="co">#&gt; 48   brooding</span></span>
+<span id="cb17-123"><a href="#cb17-123" tabindex="-1"></a><span class="co">#&gt; 49   brooding</span></span>
+<span id="cb17-124"><a href="#cb17-124" tabindex="-1"></a><span class="co">#&gt; 50   brooding</span></span>
+<span id="cb17-125"><a href="#cb17-125" tabindex="-1"></a><span class="co">#&gt; 51   brooding</span></span>
+<span id="cb17-126"><a href="#cb17-126" tabindex="-1"></a><span class="co">#&gt; 52     random</span></span>
+<span id="cb17-127"><a href="#cb17-127" tabindex="-1"></a><span class="co">#&gt; 53     random</span></span>
+<span id="cb17-128"><a href="#cb17-128" tabindex="-1"></a><span class="co">#&gt; 54     random</span></span>
+<span id="cb17-129"><a href="#cb17-129" tabindex="-1"></a><span class="co">#&gt; 55     random</span></span>
+<span id="cb17-130"><a href="#cb17-130" tabindex="-1"></a><span class="co">#&gt; 56     random</span></span>
+<span id="cb17-131"><a href="#cb17-131" tabindex="-1"></a><span class="co">#&gt; 57 incubation</span></span>
+<span id="cb17-132"><a href="#cb17-132" tabindex="-1"></a><span class="co">#&gt; 58   brooding</span></span>
+<span id="cb17-133"><a href="#cb17-133" tabindex="-1"></a><span class="co">#&gt; 59     random</span></span>
+<span id="cb17-134"><a href="#cb17-134" tabindex="-1"></a><span class="co">#&gt; 60     random</span></span>
+<span id="cb17-135"><a href="#cb17-135" tabindex="-1"></a><span class="co">#&gt; 61     random</span></span>
+<span id="cb17-136"><a href="#cb17-136" tabindex="-1"></a><span class="co">#&gt; 62     random</span></span>
+<span id="cb17-137"><a href="#cb17-137" tabindex="-1"></a><span class="co">#&gt; 63     random</span></span>
+<span id="cb17-138"><a href="#cb17-138" tabindex="-1"></a><span class="co">#&gt; 64     random</span></span>
+<span id="cb17-139"><a href="#cb17-139" tabindex="-1"></a><span class="co">#&gt; 65     random</span></span>
+<span id="cb17-140"><a href="#cb17-140" tabindex="-1"></a><span class="co">#&gt; 66     random</span></span>
+<span id="cb17-141"><a href="#cb17-141" tabindex="-1"></a><span class="co">#&gt; 67     random</span></span>
+<span id="cb17-142"><a href="#cb17-142" tabindex="-1"></a><span class="co">#&gt; 68     random</span></span>
+<span id="cb17-143"><a href="#cb17-143" tabindex="-1"></a><span class="co">#&gt; 69     random</span></span></code></pre></div>
+<p>Alternatively, if a custom model has been created in Section 3, it
+can be loaded by specifying its file path via the argument
+<code>model = path_final_model</code>.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>classified_breeding <span class="ot">&lt;-</span> <span class="fu">classify_breeding_behaviour</span>(breeding_data, <span class="at">model =</span> path_final_model)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>classified_breeding</span></code></pre></div>
+<div id="processing-of-multiple-individuals" class="section level2">
+<h2>Processing of multiple individuals</h2>
+<p>Here, we demonstrate how to apply the pre-installed model to breeding
+data from multiple individuals. Preprocessed daily input periods are
+stored as a list, classified iteratively, and combined into a single
+output table containing predicted breeding states and probabilities for
+all individuals.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Define species and directories</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>Species <span class="ot">&lt;-</span> <span class="st">&quot;RuddyTurnstone&quot;</span> </span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>wd <span class="ot">&lt;-</span> <span class="st">&quot;data&quot;</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>dir.raw <span class="ot">&lt;-</span> <span class="fu">file.path</span>(wd, <span class="st">&quot;RawData&quot;</span>, Species)</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="co"># gather data from all available geolocator records of your species</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>breeding_data_list <span class="ot">&lt;-</span> <span class="fu">create_breeding_data_list</span>(dir.raw, <span class="at">segment_days =</span> <span class="dv">1</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co"># remove empty lists</span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>breeding_data_list <span class="ot">&lt;-</span> breeding_data_list[<span class="fu">lengths</span>(breeding_data_list) <span class="sc">&gt;</span> <span class="dv">0</span>]</span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a><span class="co"># Create an empty list to store results</span></span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>classified_breeding <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a></span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a><span class="co"># Loop through all individuals</span></span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a><span class="cf">for</span> (ID <span class="cf">in</span> <span class="fu">names</span>(breeding_data_list)) {</span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;Processing ID: &quot;</span>, ID)</span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a>  classified_breeding[[ID]] <span class="ot">&lt;-</span> <span class="fu">classify_breeding_behaviour</span>(breeding_data_list[[ID]]) <span class="co"># Store in list</span></span>
+<span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a>}</span>
+<span id="cb19-20"><a href="#cb19-20" tabindex="-1"></a></span>
+<span id="cb19-21"><a href="#cb19-21" tabindex="-1"></a><span class="co"># Combine all results into one data.frame</span></span>
+<span id="cb19-22"><a href="#cb19-22" tabindex="-1"></a>classified_breeding <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, classified_breeding)</span>
+<span id="cb19-23"><a href="#cb19-23" tabindex="-1"></a><span class="co"># Remove row names</span></span>
+<span id="cb19-24"><a href="#cb19-24" tabindex="-1"></a><span class="fu">rownames</span>(classified_breeding) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb19-25"><a href="#cb19-25" tabindex="-1"></a></span>
+<span id="cb19-26"><a href="#cb19-26" tabindex="-1"></a><span class="co"># Convert to data.frame</span></span>
+<span id="cb19-27"><a href="#cb19-27" tabindex="-1"></a>classified_breeding_df<span class="sc">$</span>ID <span class="ot">&lt;-</span> <span class="fu">sapply</span>(classified_breeding<span class="sc">$</span>ID, <span class="st">`</span><span class="at">[</span><span class="st">`</span>, <span class="dv">1</span>) </span>
+<span id="cb19-28"><a href="#cb19-28" tabindex="-1"></a>classified_breeding_df<span class="sc">$</span>Window <span class="ot">&lt;-</span> <span class="fu">sapply</span>(classified_breeding_df<span class="sc">$</span>Window, <span class="st">`</span><span class="at">[</span><span class="st">`</span>, <span class="dv">1</span>)</span>
+<span id="cb19-29"><a href="#cb19-29" tabindex="-1"></a></span>
+<span id="cb19-30"><a href="#cb19-30" tabindex="-1"></a><span class="co"># Save results to CSV</span></span>
+<span id="cb19-31"><a href="#cb19-31" tabindex="-1"></a>utils<span class="sc">::</span><span class="fu">write.csv</span>(</span>
+<span id="cb19-32"><a href="#cb19-32" tabindex="-1"></a>  classified_breeding,</span>
+<span id="cb19-33"><a href="#cb19-33" tabindex="-1"></a>  <span class="fu">file.path</span>(wd, <span class="fu">paste0</span>(<span class="st">&quot;classified_breeding_results_&quot;</span>, Species,<span class="st">&quot;.csv&quot;</span>)),</span>
+<span id="cb19-34"><a href="#cb19-34" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb19-35"><a href="#cb19-35" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
