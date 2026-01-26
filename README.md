@@ -8,7 +8,7 @@ Install the development version from GitHub:
 
 ```r
 install.packages("remotes")
-remotes::install_github("Bennett-Stolze/NestNetR")
+remotes::install_github("XXXX-1/NestNetR")
 ```
 
 ## Deep-learning backend
