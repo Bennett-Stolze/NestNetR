@@ -3,8 +3,8 @@ Title: Deep-learning based Analysis of Breeding Behaviour from Geolocator Data
 Version: 1.0.0
 Authors@R: 
     c(
-      person("Bennett Paul", "Stolze", email = "bennettstolze@web.de", role = c("aut", "cre")),
-      person("Simeon", "Lisovski", email = "Simeon.Lisovski@gmail.com", role = "aut")
+      person("Author1", role = c("aut", "cre")),
+      person("Author2", role = "aut")
     )
 Description: NestNetR provides an integrated R-based workflow for the preprocessing and 
   analysis of geolocator and biologger data, including tools to combine light and temperature recordings, 
