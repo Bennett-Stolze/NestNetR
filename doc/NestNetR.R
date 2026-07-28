@@ -1,65 +1,53 @@
-## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-knitr::opts_knit$set(root.dir = rprojroot::find_package_root_file())
-devtools::document()
 
-## ----eval = FALSE-------------------------------------------------------------
-# library(devtools)
-# install_github("bennett-stolze/NestNetR")
+# install.packages("pak")
+# pak::pak("bennett-stolze/NestNetR")
 
-## ----message=FALSE, warning=FALSE---------------------------------------------
 library(NestNetR)
 
-## -----------------------------------------------------------------------------
 ID <- "BB959"
 Species <- "RuddyTurnstone" 
 wd <- "data"
 dir.raw <- file.path(wd, "RawData", Species)
 
-## -----------------------------------------------------------------------------
 raw_light <- read_light(file.path(wd, "RawData", Species, paste0(ID, ".lux")))
 head(raw_light)
 str(raw_light)
 
-## -----------------------------------------------------------------------------
 raw_deg <- read_deg(file.path(wd, "RawData", Species, paste0(ID, ".deg")))
 head(raw_deg)
 str(raw_deg)
 
-## -----------------------------------------------------------------------------
 tm.breeding <- set_breeding_period(dir.raw, raw_light, raw_deg, ID, auto = TRUE)
 tm.breeding
 
-## ----eval = FALSE-------------------------------------------------------------
 # tm.breeding <- set_breeding_period(dir.raw, raw_light, raw_deg, ID, auto = FALSE, gr.Device = "x11")
 # tm.breeding
 
-## -----------------------------------------------------------------------------
-breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
+segment_days <- 1
+breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days = segment_days)
 
-## ----eval = FALSE-------------------------------------------------------------
 # library(keras3)
 # library(caret)
-# 
+#
 # # Define window length (number of days)
-# segment_days <- 2
-# 
+# segment_days <- 1
+#
 # # Define class weights
 # weight_brooding <- 2.5
 # weight_incubation <- 2
 # weight_random <- 0.8
 
-## ----eval = FALSE-------------------------------------------------------------
 # # gather data from all available geolocator records of your species
-# breeding_data_list <- create_breeding_data_list(dir.raw, segment_days = 1)
-# 
+# breeding_data_list <- create_breeding_data_list(dir.raw, segment_days = segment_days)
+#
 # # Create training data
 # preclassified_data <- create_trainingdata(breeding_data_list,
-#                                           segment_days = 1,
-#                                           dir.raw,
+#                                           segment_days = segment_days,
+#                                           dir.raw = dir.raw,
 #                                           gr.Device = "x11")
 # 
 # # Partition preclassified data into training- (80%) and test-data (20%)
@@ -68,87 +56,34 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
 # training_data <- preclassified_data[partition]
 # test_data <- preclassified_data[-partition]
 
-## ----eval = FALSE-------------------------------------------------------------
-# light_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-#   vals <- as.numeric(x$Light)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
+# vars <- c("Light", "Tmin", "Tmax")
+# window_length <- segment_days * 288
+#
+# make_array <- function(data, vars, window_length) {
+#   channels <- lapply(vars, function(var) {
+#     do.call(rbind, lapply(data, function(x) as.numeric(x[[var]])[seq_len(window_length)]))
+#   })
+#   do.call(abind::abind, c(channels, along = 3))
+# }
 # 
-# tmin_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-#   vals <- as.numeric(x$Tmin)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
-# 
-# tmax_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-#   vals <- as.numeric(x$Tmax)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
-# 
-# # Combine arrays for model input
-# x_breeding <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 3) # 3 = number of variables included
+# x_breeding <- make_array(breeding_data, vars, window_length)
+# x_train <- make_array(training_data, vars, window_length)
+# x_test <- make_array(test_data, vars, window_length)
 
-## ----eval = FALSE-------------------------------------------------------------
-# light_truncated <- do.call(rbind, lapply(training_data, function(x) {
-#   vals <- as.numeric(x$Light)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
-# 
-# tmin_truncated <- do.call(rbind, lapply(training_data, function(x) {
-#   vals <- as.numeric(x$Tmin)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
-# 
-# tmax_truncated <- do.call(rbind, lapply(training_data, function(x) {
-#   vals <- as.numeric(x$Tmax)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
-# 
-# # Combine arrays for model input
-# x_training <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 3) # 3 = number of variables included
-
-## ----eval = FALSE-------------------------------------------------------------
-# light_truncated <- do.call(rbind, lapply(test_data, function(x) {
-#   vals <- as.numeric(x$Light)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
-# 
-# tmin_truncated <- do.call(rbind, lapply(test_data, function(x) {
-#   vals <- as.numeric(x$Tmin)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
-# 
-# tmax_truncated <- do.call(rbind, lapply(test_data, function(x) {
-#   vals <- as.numeric(x$Tmax)
-#   if (length(vals) >= minlen) vals[1:minlen]
-# }))
-# 
-# # Combine arrays for model input
-# x_test <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 3) # 3 = number of variables included
-
-## ----eval = FALSE-------------------------------------------------------------
-# model_name <- "costum"
+# model_name <- "custom"
 # # link directory
 # dir.model <- file.path(wd, "Model", model_name)
 # 
-# # Create directory inside you data-folder for storing the costum model
-# dir.create(file.path(dir.model), recursive = TRUE)
+# # Create directory inside your data folder for storing the custom model
+# dir.create(dir.model, recursive = TRUE, showWarnings = FALSE)
 # 
 # # Create k folds
-# train_classes <- sapply(training_data, `[[`, "Class") # extract classes
-# train_classes <- factor(train_classes, levels = c("brooding", "incubation", "random"))
+# class_levels <- c("brooding", "incubation", "random")
+# train_classes <- factor(sapply(training_data, `[[`, "Class"), levels = class_levels)
 # folds <- caret::createFolds(train_classes, k = 5, returnTrain = TRUE)
 # 
-# # Storage-df for results of each fold
-# cv_results <- data.frame(
-#   fold = integer(),
-#   val_accuracy = numeric(),
-#   val_precision = numeric(),
-#   val_recall = numeric(),
-#   val_f1 = numeric()
-# )
-# 
-# # K-fold cross-validation loop
-# for(i in seq_along(folds)) {
+# # K-fold cross-validation
+# cv_results <- lapply(seq_along(folds), function(i) {
 #   cat("Processing Fold", i, "of", length(folds), "\n")
 # 
 #   # Get indices for this fold
@@ -156,24 +91,18 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
 #   val_idx <- setdiff(seq_len(length(training_data)), train_idx)
 # 
 #   # Split the data
-#   x_train_fold <- x_train[train_idx, , ]
-#   x_val_fold <- x_train[val_idx, , ]
+#   x_train_fold <- x_train[train_idx, , , drop = FALSE]
+#   x_val_fold <- x_train[val_idx, , , drop = FALSE]
 # 
 #   # Prepare labels (one-hot encode)
-#   class_levels <- c("brooding", "incubation", "random")
-# 
-#   # Convert to integer indices (0-based)
-#   y_int_train <- as.integer(factor(train_classes[train_idx], levels = class_levels)) - 1
-#   y_int_val   <- as.integer(factor(train_classes[val_idx],   levels = class_levels)) - 1
-# 
-#   # One-hot encode
-#   y_train_fold <- to_categorical(as.integer(factor(train_classes[train_idx], levels=class_levels))-1L,
-#                                       num_classes=length(class_levels))
-#   y_val_fold   <- to_categorical(y_int_val, num_classes = length(class_levels))
+#   y_train_fold <- to_categorical(as.integer(train_classes[train_idx]) - 1,
+#                                  num_classes = length(class_levels))
+#   y_val_fold <- to_categorical(as.integer(train_classes[val_idx]) - 1,
+#                                num_classes = length(class_levels))
 # 
 # 
 #   # Define the model
-#   inputs <- layer_input(shape = c(window_length, dim(x_train)[[3]]))
+#   inputs <- layer_input(shape = c(window_length, dim(x_train)[3]))
 #   outputs <- inputs %>%
 #     layer_conv_1d(filters = 400, kernel_size = 12, activation = 'relu') %>%
 #     layer_average_pooling_1d(pool_size = 12, padding = "same") %>%
@@ -216,21 +145,25 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
 #   )
 # 
 #   # Evaluate on validation fold
-#   val_metrics <- model %>% evaluate(x_val_fold, y_val_fold, verbose=0)
+#   val_metrics <- model %>% evaluate(x_val_fold, y_val_fold, verbose = 0)
 # 
 #   val_accuracy  <- as.numeric(val_metrics["categorical_accuracy"])
 #   val_precision <- as.numeric(val_metrics["Precision"])
 #   val_recall    <- as.numeric(val_metrics["Recall"])
 #   val_f1 <- 2 * (val_precision * val_recall) / (val_precision + val_recall)
-#   cv_results <- rbind(cv_results, data.frame(fold=i,
-#                                              val_accuracy,
-#                                              val_precision,
-#                                              val_recall,
-#                                              val_f1))
-# 
-#   cat("Fold", i, "- Val F1:", round(cv_results$val_f1[nrow(cv_results)], 2), "\n")
+#
+#   cat("Fold", i, "- Val F1:", round(val_f1, 2), "\n")
 #   keras3::clear_session() # clear between folds
-# }
+#
+#   data.frame(
+#     fold = i,
+#     val_accuracy,
+#     val_precision,
+#     val_recall,
+#     val_f1
+#   )
+# }) |>
+#   dplyr::bind_rows()
 # 
 # # Summary of cross-validation results
 # cat("\n=== Cross-Validation Results ===\n")
@@ -243,18 +176,18 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
 # print(summary(cv_results))
 # 
 # # Check for high variance across folds (indicates instability)
-# if(sd(cv_results$val_accuracy) > 0.1) {
+# if (sd(cv_results$val_accuracy) > 0.1) {
 #   cat("Warning: High variance across folds. Consider:\n")
 #   cat("- More data\n- Different architecture\n- Better regularization\n")
 # }
 
-## ----eval = FALSE-------------------------------------------------------------
 # # indicate file path for final model
 # path_final_model <- file.path(dir.model, "final_model.keras")
 # 
 # # Convert labels to numeric and one-hot encode
 # classes_training <- sapply(training_data, `[[`, "Class")
-# y_train <- to_categorical(as.numeric(factor(classes_training)) - 1)
+# y_train <- to_categorical(as.integer(factor(classes_training, levels = class_levels)) - 1,
+#                           num_classes = length(class_levels))
 # 
 # # Load the best performing model from Cross-Validation
 # model <- keras3::load_model(file.path(dir.model, paste0("cv_fold_", cv_results$fold[which.max(cv_results$val_f1)], ".keras")))
@@ -284,10 +217,10 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
 #   )
 # )
 
-## ----eval = FALSE-------------------------------------------------------------
 # # Make predictions on test set
 # classes_test <- sapply(test_data, `[[`, "Class")
-# y_test <- to_categorical(as.numeric(factor(classes_test)) - 1)
+# y_test <- to_categorical(as.integer(factor(classes_test, levels = class_levels)) - 1,
+#                          num_classes = length(class_levels))
 # 
 # test_predictions <- model %>% predict(x_test)
 # test_metrics <- model %>% evaluate(x_test, y_test)
@@ -302,15 +235,12 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
 #   factor(true_classes, levels = 0:2, labels = c("brooding", "incubation", "random"))
 # )
 
-## -----------------------------------------------------------------------------
 classified_breeding <- classify_breeding_behaviour(breeding_data)
 classified_breeding
 
-## ----eval = FALSE-------------------------------------------------------------
 # classified_breeding <- classify_breeding_behaviour(breeding_data, model = path_final_model)
 # classified_breeding
 
-## ----eval = FALSE-------------------------------------------------------------
 # # Define species and directories
 # Species <- "RuddyTurnstone"
 # wd <- "data"
@@ -322,28 +252,12 @@ classified_breeding
 # # remove empty lists
 # breeding_data_list <- breeding_data_list[lengths(breeding_data_list) > 0]
 # 
-# # Create an empty list to store results
-# classified_breeding <- list()
-# 
-# # Loop through all individuals
-# for (ID in names(breeding_data_list)) {
-#   message("Processing ID: ", ID)
-#   classified_breeding[[ID]] <- classify_breeding_behaviour(breeding_data_list[[ID]]) # Store in list
-# }
-# 
-# # Combine all results into one data.frame
-# classified_breeding <- do.call(rbind, classified_breeding)
-# # Remove row names
-# rownames(classified_breeding) <- NULL
-# 
-# # Convert to data.frame
-# classified_breeding_df$ID <- sapply(classified_breeding$ID, `[`, 1)
-# classified_breeding_df$Window <- sapply(classified_breeding_df$Window, `[`, 1)
+# classified_breeding_df <- lapply(breeding_data_list, classify_breeding_behaviour) |>
+#   dplyr::bind_rows()
 # 
 # # Save results to CSV
 # utils::write.csv(
-#   classified_breeding,
-#   file.path(wd, paste0("classified_breeding_results_", Species,".csv")),
+#   classified_breeding_df,
+#   file.path(wd, paste0("classified_breeding_results_", Species, ".csv")),
 #   row.names = FALSE
 # )
-

@@ -13,17 +13,15 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-knitr::opts_knit$set(root.dir = rprojroot::find_package_root_file())
-devtools::document()
 ```
 # Getting started {#start}
 To classify breeding behaviour from light-level geolocator data in R we need a couple of R packages as well as functions that allow to run our code. 
 
-The package requires _devtools_ (install if necessary using the _install.packages()_ function). With _devtools_ on your system, you are able to download and built as well as install R packages directly from GitHub (e.g. _NestNetR_).
+The package can be installed from GitHub with _pak_.
 
 ```{r, eval = FALSE}
-library(devtools)
-install_github("bennett-stolze/NestNetR")
+install.packages("pak")
+pak::pak("bennett-stolze/NestNetR")
 ```
 
 You should now be able to load the package. We recommend to check (every now and then), if there is a new version of _NestNetR_ available. And if that is the case, re-install the package using the same code you used for initial installation.
@@ -49,7 +47,7 @@ dir.raw <- file.path(wd, "RawData", Species)
 ```
 
 By using the above metadata we can use the `file.path` and `paste0` commands to include this information in reading and writing of files.
-The columns of our data need to be in a specific format with Date being a `POSIXc` class and Light, Tmin & Tmax (and potentially other variables) being `numeric` integers. Check if the structure of your data follows the required format with the function `str`. If not, adjust Date format with `as.POSIXct(raw_light$Date, tz = "GMT")`. We will load both light and temperature data to check their structure.
+The columns of our data need to be in a specific format with Date being a `POSIXct` class and Light, Tmin & Tmax (and potentially other variables) being numeric values. Check if the structure of your data follows the required format with the function `str`. If not, adjust Date format with `as.POSIXct(raw_light$Date, tz = "GMT")`. We will load both light and temperature data to check their structure.
 
 ```{r}
 raw_light <- read_light(file.path(wd, "RawData", Species, paste0(ID, ".lux")))
@@ -63,11 +61,13 @@ head(raw_deg)
 str(raw_deg)
 ```
 
+If a `.deg` file matching the full ID is not found, `read_deg()` also tries the base ID with bracketed suffixes removed, for example `BB880(1)` -> `BB880`.
+
 ## 1.2 - Identify breeding period
 Since the raw data covers the entire migration route, the dataset must be trimmed to the breeding period before processing. This can be done either by automatically detecting the period using a corresponding twilight file (.twl) or by manually specifying the range.
 
 ### 1.2.1 - Automatic detection
-If a twilight file is available, the breeding period can be automatically detected using the `auto = T` setting in the `set_breeding_period` function. Twilight files (`.csv`) can be created by functions associated with the _GeoLight_ or _TwGeos_ packages. The twilight file needs to be put into the `RawData` folder alongside the light and temperature data.
+If a twilight file is available, the breeding period can be automatically detected using the `auto = TRUE` setting in the `set_breeding_period` function. Twilight files (`.csv`) can be created by functions associated with the _GeoLight_ or _TwGeos_ packages. The twilight file needs to be put into the `RawData` folder alongside the light and temperature data.
 
 *Automatic Approach*
 ```{r}
@@ -98,7 +98,8 @@ Light data provides the reference timeline with the coarsest resolution, while t
 All input variables are then normalised to a range of 0–1 to ensure comparability. To minimise the influence of extreme outliers, realistic value ranges are defined by calculating the 2.5th and 97.5th percentiles of each variable (`Light`, `Tmin`, `Tmax`) across all preprocessed data.
 
 ```{r}
-breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding)
+segment_days <- 1
+breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days = segment_days)
 ```
 
 
@@ -110,7 +111,7 @@ library(keras3)
 library(caret)
 
 # Define window length (number of days)
-segment_days <- 2 
+segment_days <- 1
 
 # Define class weights
 weight_brooding <- 2.5
@@ -122,13 +123,13 @@ weight_random <- 0.8
 Before model training, a labelled dataset needs to be created.
 Users can gather data from all available geolocator recordings and manually classify representative samples of each behavioural class (brooding, incubation, random). The resulting dataset is then split into training and test subsets for performance evaluation. The following code demonstrates one approach to create and partition such data, but users may freely adapt file structures, proportions, or sampling routines.
 ```{r, eval = FALSE}
-# gather data from all available geolocator records of your species 
-breeding_data_list <- create_breeding_data_list(dir.raw, segment_days = 1)
+# gather data from all available geolocator records of your species
+breeding_data_list <- create_breeding_data_list(dir.raw, segment_days = segment_days)
 
 # Create training data 
 preclassified_data <- create_trainingdata(breeding_data_list,
-                                          segment_days = 1,
-                                          dir.raw, 
+                                          segment_days = segment_days,
+                                          dir.raw = dir.raw,
                                           gr.Device = "x11")
 
 # Partition preclassified data into training- (80%) and test-data (20%) 
@@ -138,101 +139,46 @@ training_data <- preclassified_data[partition]
 test_data <- preclassified_data[-partition]
 ```
 
-## 3.2 - Setting up the costum model
+## 3.2 - Setting up the custom model
 If desired, users can define a custom architecture instead of using the pre-trained base model. This step includes preparing the previously created training data, training and evaluation of the model. Below, we provide a template architecture and training procedure that can serve as a starting point for model development.
 Users can modify any component — from input features and layer types to kernel sizes, optimisers, or training strategy.
 
 ### 3.2.1 - Preparing data for model training
 Input data (Light, Tmin, Tmax) are truncated to equal window lengths and combined into 3-channel arrays for model input. You may add or remove variables as you wish.
-#### Entire dataset
+#### Model arrays
 ```{r, eval = FALSE}
-light_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-  vals <- as.numeric(x$Light)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
+vars <- c("Light", "Tmin", "Tmax")
+window_length <- segment_days * 288
 
-tmin_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-  vals <- as.numeric(x$Tmin)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
+make_array <- function(data, vars, window_length) {
+  channels <- lapply(vars, function(var) {
+    do.call(rbind, lapply(data, function(x) as.numeric(x[[var]])[seq_len(window_length)]))
+  })
+  do.call(abind::abind, c(channels, along = 3))
+}
 
-tmax_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-  vals <- as.numeric(x$Tmax)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
-
-# Combine arrays for model input
-x_breeding <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 3) # 3 = number of variables included
-```
-
-#### Training data
-```{r, eval = FALSE}
-light_truncated <- do.call(rbind, lapply(training_data, function(x) {
-  vals <- as.numeric(x$Light)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
-
-tmin_truncated <- do.call(rbind, lapply(training_data, function(x) {
-  vals <- as.numeric(x$Tmin)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
-
-tmax_truncated <- do.call(rbind, lapply(training_data, function(x) {
-  vals <- as.numeric(x$Tmax)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
-
-# Combine arrays for model input
-x_training <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 3) # 3 = number of variables included
-```
-
-#### Test data
-```{r, eval = FALSE}
-light_truncated <- do.call(rbind, lapply(test_data, function(x) {
-  vals <- as.numeric(x$Light)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
-
-tmin_truncated <- do.call(rbind, lapply(test_data, function(x) {
-  vals <- as.numeric(x$Tmin)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
-
-tmax_truncated <- do.call(rbind, lapply(test_data, function(x) {
-  vals <- as.numeric(x$Tmax)
-  if (length(vals) >= minlen) vals[1:minlen]
-}))
-
-# Combine arrays for model input
-x_test <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 3) # 3 = number of variables included
+x_breeding <- make_array(breeding_data, vars, window_length)
+x_train <- make_array(training_data, vars, window_length)
+x_test <- make_array(test_data, vars, window_length)
 ```
 
 ### 3.2.2 - Training using 5-fold cross-validation
 The example below outlines a standard 5-fold training routine for assessing model robustness. Users can modify the number of folds, metrics, or validation strategies as desired. Each fold’s best model is stored for later comparison.
 ```{r, eval = FALSE}
-model_name <- "costum"
+model_name <- "custom"
 # link directory
 dir.model <- file.path(wd, "Model", model_name)
 
-# Create directory inside you data-folder for storing the costum model
-dir.create(file.path(dir.model), recursive = TRUE)
+# Create directory inside your data folder for storing the custom model
+dir.create(dir.model, recursive = TRUE, showWarnings = FALSE)
 
 # Create k folds
-train_classes <- sapply(training_data, `[[`, "Class") # extract classes
-train_classes <- factor(train_classes, levels = c("brooding", "incubation", "random"))
+class_levels <- c("brooding", "incubation", "random")
+train_classes <- factor(sapply(training_data, `[[`, "Class"), levels = class_levels)
 folds <- caret::createFolds(train_classes, k = 5, returnTrain = TRUE)
 
-# Storage-df for results of each fold
-cv_results <- data.frame(
-  fold = integer(),
-  val_accuracy = numeric(),
-  val_precision = numeric(),
-  val_recall = numeric(),
-  val_f1 = numeric()
-)
-
-# K-fold cross-validation loop
-for(i in seq_along(folds)) {
+# K-fold cross-validation
+cv_results <- lapply(seq_along(folds), function(i) {
   cat("Processing Fold", i, "of", length(folds), "\n")
   
   # Get indices for this fold
@@ -240,24 +186,18 @@ for(i in seq_along(folds)) {
   val_idx <- setdiff(seq_len(length(training_data)), train_idx)
 
   # Split the data
-  x_train_fold <- x_train[train_idx, , ]
-  x_val_fold <- x_train[val_idx, , ]
+  x_train_fold <- x_train[train_idx, , , drop = FALSE]
+  x_val_fold <- x_train[val_idx, , , drop = FALSE]
 
   # Prepare labels (one-hot encode)
-  class_levels <- c("brooding", "incubation", "random")
-  
-  # Convert to integer indices (0-based)
-  y_int_train <- as.integer(factor(train_classes[train_idx], levels = class_levels)) - 1
-  y_int_val   <- as.integer(factor(train_classes[val_idx],   levels = class_levels)) - 1
-  
-  # One-hot encode
-  y_train_fold <- to_categorical(as.integer(factor(train_classes[train_idx], levels=class_levels))-1L,
-                                      num_classes=length(class_levels))
-  y_val_fold   <- to_categorical(y_int_val, num_classes = length(class_levels))
+  y_train_fold <- to_categorical(as.integer(train_classes[train_idx]) - 1,
+                                 num_classes = length(class_levels))
+  y_val_fold <- to_categorical(as.integer(train_classes[val_idx]) - 1,
+                               num_classes = length(class_levels))
 
   
   # Define the model
-  inputs <- layer_input(shape = c(window_length, dim(x_train)[[3]]))
+  inputs <- layer_input(shape = c(window_length, dim(x_train)[3]))
   outputs <- inputs %>%
     layer_conv_1d(filters = 400, kernel_size = 12, activation = 'relu') %>% 
     layer_average_pooling_1d(pool_size = 12, padding = "same") %>%
@@ -300,21 +240,25 @@ for(i in seq_along(folds)) {
   )
   
   # Evaluate on validation fold
-  val_metrics <- model %>% evaluate(x_val_fold, y_val_fold, verbose=0)
+  val_metrics <- model %>% evaluate(x_val_fold, y_val_fold, verbose = 0)
 
   val_accuracy  <- as.numeric(val_metrics["categorical_accuracy"])
   val_precision <- as.numeric(val_metrics["Precision"])
   val_recall    <- as.numeric(val_metrics["Recall"])
   val_f1 <- 2 * (val_precision * val_recall) / (val_precision + val_recall)
-  cv_results <- rbind(cv_results, data.frame(fold=i,
-                                             val_accuracy,
-                                             val_precision,
-                                             val_recall,
-                                             val_f1))
 
-  cat("Fold", i, "- Val F1:", round(cv_results$val_f1[nrow(cv_results)], 2), "\n")
+  cat("Fold", i, "- Val F1:", round(val_f1, 2), "\n")
   keras3::clear_session() # clear between folds
-}
+
+  data.frame(
+    fold = i,
+    val_accuracy,
+    val_precision,
+    val_recall,
+    val_f1
+  )
+}) |>
+  dplyr::bind_rows()
 
 # Summary of cross-validation results
 cat("\n=== Cross-Validation Results ===\n")
@@ -327,7 +271,7 @@ cat("CV Performance Summary:\n")
 print(summary(cv_results))
 
 # Check for high variance across folds (indicates instability)
-if(sd(cv_results$val_accuracy) > 0.1) {
+if (sd(cv_results$val_accuracy) > 0.1) {
   cat("Warning: High variance across folds. Consider:\n")
   cat("- More data\n- Different architecture\n- Better regularization\n")
 }
@@ -341,7 +285,8 @@ path_final_model <- file.path(dir.model, "final_model.keras")
 
 # Convert labels to numeric and one-hot encode
 classes_training <- sapply(training_data, `[[`, "Class")
-y_train <- to_categorical(as.numeric(factor(classes_training)) - 1)
+y_train <- to_categorical(as.integer(factor(classes_training, levels = class_levels)) - 1,
+                          num_classes = length(class_levels))
 
 # Load the best performing model from Cross-Validation
 model <- keras3::load_model(file.path(dir.model, paste0("cv_fold_", cv_results$fold[which.max(cv_results$val_f1)], ".keras")))
@@ -377,7 +322,8 @@ The final model can be validated against the previously created, held-out test s
 ```{r, eval = FALSE}
 # Make predictions on test set
 classes_test <- sapply(test_data, `[[`, "Class")
-y_test <- to_categorical(as.numeric(factor(classes_test)) - 1)
+y_test <- to_categorical(as.integer(factor(classes_test, levels = class_levels)) - 1,
+                         num_classes = length(class_levels))
 
 test_predictions <- model %>% predict(x_test)
 test_metrics <- model %>% evaluate(x_test, y_test)
@@ -422,28 +368,13 @@ breeding_data_list <- create_breeding_data_list(dir.raw, segment_days = 1)
 # remove empty lists
 breeding_data_list <- breeding_data_list[lengths(breeding_data_list) > 0]
 
-# Create an empty list to store results
-classified_breeding <- list()
-
-# Loop through all individuals
-for (ID in names(breeding_data_list)) {
-  message("Processing ID: ", ID)
-  classified_breeding[[ID]] <- classify_breeding_behaviour(breeding_data_list[[ID]]) # Store in list
-}
-
-# Combine all results into one data.frame
-classified_breeding <- do.call(rbind, classified_breeding)
-# Remove row names
-rownames(classified_breeding) <- NULL
-
-# Convert to data.frame
-classified_breeding_df$ID <- sapply(classified_breeding$ID, `[`, 1) 
-classified_breeding_df$Window <- sapply(classified_breeding_df$Window, `[`, 1)
+classified_breeding_df <- lapply(breeding_data_list, classify_breeding_behaviour) |>
+  dplyr::bind_rows()
 
 # Save results to CSV
 utils::write.csv(
-  classified_breeding,
-  file.path(wd, paste0("classified_breeding_results_", Species,".csv")),
+  classified_breeding_df,
+  file.path(wd, paste0("classified_breeding_results_", Species, ".csv")),
   row.names = FALSE
 )
 ```
