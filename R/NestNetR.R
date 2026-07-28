@@ -625,25 +625,20 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
 #' @export
 classify_breeding_behaviour <- function(breeding_data, model = "base") {
   # --- find minimum sequence length automatically ---
-  seq_lengths <- sapply(breeding_data, function(x) length(x$Light))
+  seq_lengths <- vapply(breeding_data, function(x) length(x$Light), numeric(1))
   minlen <- min(seq_lengths, na.rm = TRUE)
   
   # --- preprocess for model input ---
-  light_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-    vals <- as.numeric(x$Light)
-    if (length(vals) >= minlen) vals[1:minlen]
-  }))
+  to_matrix <- function(var) {
+    t(vapply(breeding_data, function(x) as.numeric(x[[var]])[seq_len(minlen)], numeric(minlen)))
+  }
   
-  tmin_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-    vals <- as.numeric(x$Tmin)
-    if (length(vals) >= minlen) vals[1:minlen]
-  }))
-  
-  tmax_truncated <- do.call(rbind, lapply(breeding_data, function(x) {
-    vals <- as.numeric(x$Tmax)
-    if (length(vals) >= minlen) vals[1:minlen]
-  }))
-  x_breeding <- abind::abind(light_truncated, tmin_truncated, tmax_truncated, along = 3)
+  x_breeding <- abind::abind(
+    to_matrix("Light"),
+    to_matrix("Tmin"),
+    to_matrix("Tmax"),
+    along = 3
+  )
   
   # --- load model ---
   if (model == "base") {
@@ -669,8 +664,7 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   colnames(predictions) <- levels(factor(classes))
   
   # Get the predicted classes
-  predicted_classes <- apply(predictions, 1, which.max)
-  predicted_classes <- levels(factor(classes))[predicted_classes]
+  predicted_classes <- classes[max.col(as.matrix(predictions))]
 
   # --- reassemble metadata ---
   breeding_data_df <- lapply(breeding_data, function(x) {
@@ -740,17 +734,18 @@ create_breeding_data_list <- function(dir.raw, auto = TRUE, segment_days = 1, pa
   # Progress bar
   pb <- txtProgressBar(min = 0, max = length(ID_list), style = 3, width = 25)
   
-  for (ID in ID_list) {
+  for (i in seq_along(ID_list)) {
+    ID <- ID_list[i]
     raw_light <- NestNetR::read_light(file.path(dir.raw, paste0(ID, ".lux")))
     raw_deg <- NestNetR::read_deg(file.path(dir.raw, paste0(ID, ".deg")))
     
     tm.breeding <- NestNetR::set_breeding_period(dir.raw, raw_light, raw_deg, ID, auto)
     
-    breeding_data <- NestNetR::preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days)
+    breeding_data <- NestNetR::preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days = segment_days)
     
     breeding_data_list[[ID]] <- breeding_data
     
-    setTxtProgressBar(pb, which(ID_list == ID))
+    setTxtProgressBar(pb, i)
   }
   
   close(pb)
@@ -834,6 +829,14 @@ create_trainingdata <- function(breeding_data_list, segment_days, dir.raw, zlim=
     )
   }))
   
+  light_data <- list()
+  get_light_data <- function(id) {
+    if (is.null(light_data[[id]])) {
+      light_data[[id]] <<- read_light(file.path(dir.raw, paste0(id, ".lux")))
+    }
+    light_data[[id]]
+  }
+  
   breeding_data_list <- unlist(breeding_data_list, recursive = FALSE)
   names(breeding_data_list) <- gsub("\\.", "_", names(breeding_data_list))
   
@@ -855,8 +858,7 @@ create_trainingdata <- function(breeding_data_list, segment_days, dir.raw, zlim=
     Date2 <- Date1 + segment_days*24*60*60
     start_date <- id_summary[id_summary$ID==ID,"start_date"]
     end_date <- id_summary[id_summary$ID==ID,"end_date"]
-    tagdata <- subset(read_light(file.path(dir.raw,paste0(ID,".lux"))),
-                      Date >= start_date & Date <= end_date)
+    tagdata <- subset(get_light_data(ID), Date >= start_date & Date <= end_date)
     
     # --- ensure Date1 and Date2 fall within available data ---
     if (nrow(tagdata) == 0) next  # skip empty tagdata
