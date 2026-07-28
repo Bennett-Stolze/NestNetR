@@ -13,6 +13,10 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+input_file <- knitr::current_input(dir = TRUE)
+if (!is.null(input_file)) {
+  knitr::opts_knit$set(root.dir = normalizePath(file.path(dirname(input_file), "..")))
+}
 ```
 # Getting started {#start}
 To classify breeding behaviour from light-level geolocator data in R we need a couple of R packages as well as functions that allow to run our code. 

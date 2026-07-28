@@ -2,6 +2,10 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+input_file <- knitr::current_input(dir = TRUE)
+if (!is.null(input_file)) {
+  knitr::opts_knit$set(root.dir = normalizePath(file.path(dirname(input_file), "..")))
+}
 
 # install.packages("pak")
 # pak::pak("bennett-stolze/NestNetR")
@@ -49,7 +53,7 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days
 #                                           segment_days = segment_days,
 #                                           dir.raw = dir.raw,
 #                                           gr.Device = "x11")
-# 
+#
 # # Partition preclassified data into training- (80%) and test-data (20%)
 # classes <- sapply(preclassified_data, `[[`, "Class") # extract classes
 # partition <- caret::createDataPartition(classes, p = 0.8, list = FALSE, times = 1) # 80% of each class goes to training, 20% to test data
@@ -65,7 +69,7 @@ breeding_data <- preprocessing(ID, raw_light, raw_deg, tm.breeding, segment_days
 #   })
 #   do.call(abind::abind, c(channels, along = 3))
 # }
-# 
+#
 # x_breeding <- make_array(breeding_data, vars, window_length)
 # x_train <- make_array(training_data, vars, window_length)
 # x_test <- make_array(test_data, vars, window_length)
