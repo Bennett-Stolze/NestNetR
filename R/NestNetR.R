@@ -92,7 +92,14 @@ read_light <- function(light_file, tz = "UTC") {
 read_deg <- function(deg_file, tz = "UTC") {
   stopifnot(is.character(deg_file), length(deg_file) == 1)
   if (!file.exists(deg_file)) {
-    stop("File not found: ", deg_file, call. = FALSE)
+    base_id <- gsub("\\(.*\\)", "", tools::file_path_sans_ext(basename(deg_file)))
+    base_deg_file <- file.path(dirname(deg_file), paste0(base_id, ".deg"))
+    
+    if (file.exists(base_deg_file)) {
+      deg_file <- base_deg_file
+    } else {
+      stop("File not found: ", deg_file, call. = FALSE)
+    }
   }
   
   raw_lines  <- base::readLines(deg_file, warn = FALSE)
