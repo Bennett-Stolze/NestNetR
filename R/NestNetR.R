@@ -407,6 +407,7 @@ set_breeding_period <- function(dir.raw, raw_light, raw_deg, ID, auto = TRUE, gr
 #'   \item{ID}{Character; deployment ID.}
 #'   \item{Window}{Sequential number of the segment.}
 #'   \item{Date}{Date corresponding to the segment start.}
+#' }
 #' 
 #' @details
 #' Light and temperature data are aligned, interpolated, and trimmed to the

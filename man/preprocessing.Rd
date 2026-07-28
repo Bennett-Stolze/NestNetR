@@ -63,6 +63,7 @@ scaled to 0–1 range.}
 \item{Window}{Sequential number of the segment.}
 \item{Date}{Date corresponding to the segment start.}
 }
+}
 \description{
 \strong{Assembles, cleans, and segments biologger data for the Arctic breeding period}
 into standardised time windows suitable for deep-learning classification.
