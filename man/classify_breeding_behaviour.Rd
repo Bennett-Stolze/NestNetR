@@ -13,7 +13,7 @@ contains \code{Light}, \code{Tmin}, and \code{Tmax} vectors, plus metadata
 fields (\code{ID}, \code{Window}, \code{Date}).}
 
 \item{model}{Character; either the keyword \code{"base"} (default, loading
-\code{Model/base_model.keras} from the working directory) or a full path to a
+\code{extdata/Model/base_model.keras} bundled with the package) or a full path to a
 custom \code{.keras} file.}
 }
 \value{
@@ -37,7 +37,7 @@ clean data frame ready for ecological analysis or visualisation.
 \details{
 Internally, the function truncates all input channels to a common window
 length, combines them into a 3-channel tensor, loads the pre-trained model
-from \code{<working directory>/Model/base_model.keras}, and performs class
+from the bundled \code{extdata/Model/base_model.keras} file, and performs class
 predictions. Probabilities are returned for all defined classes, together
 with the most likely predicted class per segment.
 }

@@ -583,13 +583,13 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
 #'   contains \code{Light}, \code{Tmin}, and \code{Tmax} vectors, plus metadata
 #'   fields (\code{ID}, \code{Window}, \code{Date}).
 #' @param model Character; either the keyword \code{"base"} (default, loading
-#'   \code{Model/base_model.keras} from the working directory) or a full path to a
+#'   the bundled \code{extdata/Model/base_model.keras} file) or a full path to a
 #'   custom \code{.keras} file.
 #'
 #' @details
 #' Internally, the function truncates all input channels to a common window
 #' length, combines them into a 3-channel tensor, loads the pre-trained model
-#' from \code{<working directory>/Model/base_model.keras}, and performs class
+#' from the bundled \code{extdata/Model/base_model.keras} file, and performs class
 #' predictions. Probabilities are returned for all defined classes, together
 #' with the most likely predicted class per segment.
 #'
@@ -639,8 +639,12 @@ classify_breeding_behaviour <- function(breeding_data, model = "base") {
   
   # --- load model ---
   if (model == "base") {
-    model <- file.path(wd, "Model", "base_model.keras")
+    model <- system.file("extdata", "Model", "base_model.keras", package = "NestNetR")
   } 
+  
+  if (model == "") {
+    stop("Base model not found in installed NestNetR package.", call. = FALSE)
+  }
   
   if (grepl("\\.keras$", model) == FALSE) {
     stop("Invalid model specified. Use 'base' or indicate correct file with .keras extension.")
