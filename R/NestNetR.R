@@ -390,8 +390,9 @@ set_breeding_period <- function(dir.raw, raw_light, raw_deg, ID, auto = TRUE, gr
 #'   (default \code{"UTC"}).
 #' @param segment_days Integer; duration of one analysis window in days
 #'   (default = **1 day**, corresponding to 288 five-minute steps).
-#' @param overlap_days Integer; overlap between consecutive segments in days
-#'   (default = **1 day**, i.e. fully overlapping daily windows).
+#' @param overlap_days Numeric; duration of the overlap between consecutive
+#'   segments in days. Must be non-negative and smaller than segment_days.
+#'   Default = 0.
 #' @param Light_quantiles Numeric vector (length 2); lower and upper quantiles used
 #'   for **light-value rescaling** (defaults based on the 2.5 % and 97.5 %
 #'   percentiles across the Ruddy Turnstone dataset).
@@ -429,10 +430,20 @@ set_breeding_period <- function(dir.raw, raw_light, raw_deg, ID, auto = TRUE, gr
 #' @importFrom purrr imap
 #' @export
 preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
-                          segment_days = 1, overlap_days = 1,
+                          segment_days = 1, overlap_days = 0,
                           Light_quantiles = c(0.9478656, 11.2115639),
                           Tmin_quantiles  = c(-2.8, 23.5),
                           Tmax_quantiles  = c(3.0, 40.8)) {
+  if (length(segment_days) != 1 || segment_days <= 0) {
+    stop("segment_days must be a positive number.")
+  }
+
+  if (length(overlap_days) != 1 ||
+      overlap_days < 0 ||
+      overlap_days >= segment_days) {
+    stop("overlap_days must be >= 0 and smaller than segment_days.")
+  }
+
   # ---- checks --- 
   if (!is.data.frame(raw_light)) rlang::abort("`raw_light` must be a data.frame.")
   if (!is.data.frame(raw_deg))   rlang::abort("`raw_deg` must be a data.frame.")
@@ -511,24 +522,22 @@ preprocessing <- function(ID, raw_light, raw_deg, tm.breeding, tz = "UTC",
   min_time <- lubridate::floor_date(min(raw_breeding$Date), unit = "day")
   max_time <- lubridate::ceiling_date(max(raw_breeding$Date), unit = "day")
   seg_dur  <- segment_days * 86400
-  ovl_dur  <- overlap_days * 86400
+  step_dur <- (segment_days - overlap_days) * 86400
   
-  segments <- list(); current_start <- min_time; id <- 1
+  segments <- list()
+  current_start <- min_time
+  id <- 1
   while (current_start + seg_dur <= max_time) {
     current_end <- current_start + seg_dur
     
     segment <- raw_breeding |>
       filter(Date >= current_start, Date < current_end)
     
-    # Create the segment name directly
     seg_name <- paste0(id, "_", as.Date(current_start))
-    
-    # Assign the data.frame directly to that list name
     segments[[seg_name]] <- segment
-    names(segments) <- as.character(names(segments))
     
     id <- id + 1
-    current_start <- current_start + ovl_dur
+    current_start <- current_start + step_dur
   }
   
   # ---- filter incomplete segments ---

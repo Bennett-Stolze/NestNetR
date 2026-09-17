@@ -11,7 +11,7 @@ preprocessing(
   tm.breeding,
   tz = "UTC",
   segment_days = 1,
-  overlap_days = 1,
+  overlap_days = 0,
   Light_quantiles = c(0.9478656, 11.2115639),
   Tmin_quantiles = c(-2.8, 23.5),
   Tmax_quantiles = c(3, 40.8)
@@ -38,8 +38,9 @@ derived from the same logger.}
 \item{segment_days}{Integer; duration of one analysis window in days
 (default = \strong{1 day}, corresponding to 288 five-minute steps).}
 
-\item{overlap_days}{Integer; overlap between consecutive segments in days
-(default = \strong{1 day}, i.e. fully overlapping daily windows).}
+\item{overlap_days}{Numeric; duration of the overlap between consecutive
+segments in days. Must be non-negative and smaller than segment_days.
+Default = 0.}
 
 \item{Light_quantiles}{Numeric vector (length 2); lower and upper quantiles used
 for \strong{light-value rescaling} (defaults based on the 2.5 \% and 97.5 \%
